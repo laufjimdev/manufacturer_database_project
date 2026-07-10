@@ -1,0 +1,64 @@
+* What does the company manufacture?
+    Mesitas Manufacturer is a events tables major manufacturer.
+* How many factories?
+    We have 3 factories:
+    -Dallas–Fort Worth, Texas
+    -Atlanta Metro, Georgia
+    -Phoenix–Buckeye Corridor, Arizona
+* How many warehouses?
+    -Chicago, Illinois (National Central Hub)
+    -Dallas, Texas (South Central Distribution)
+    -Columbus, Ohio (Midwest / Northeast buffer)
+    -Inland Empire (Riverside/San Bernardino, California)
+* How many employees?
+    Dallas–Fort Worth, Texas (Factory)
+        Production Assembly – 120
+        Welding & Fabrication – 60
+        Wood & Surface Finishing – 45
+        Quality Control – 25
+        Maintenance – 20
+        Procurement – 15
+        Plant Administration – 15
+    Total: 300
+    Atlanta Metro, Georgia (Factory)
+        Production Assembly – 110
+        Welding & Fabrication – 55
+        Wood & Surface Finishing – 40
+        Quality Control – 25
+        Maintenance – 18
+        Procurement – 12
+        Plant Administration – 15
+    Total: 275
+    Phoenix–Buckeye Corridor, Arizona (Factory)
+        Production Assembly – 100
+        Welding & Fabrication – 50
+        Wood & Surface Finishing – 35
+        Quality Control – 20
+        Maintenance – 18
+        Procurement – 12
+        Plant Administration – 15
+    Total: 250
+* How many products?
+    -72" Round Foldable Wood Table – Commercial-grade plywood top, steel folding legs, 800 lb capacity
+    -60" Round Plastic Banquet Table – High-density polyethylene top, indoor/outdoor use
+    -96" Rectangular Folding Table – Steel frame, scratch-resistant laminate top
+    -30" Cocktail Highboy Table – Adjustable height, aluminum base
+    -6 ft Rectangular Utility Table – Resin top, lightweight folding frame
+    -8 ft Heavy-Duty Event Table – Reinforced steel support, premium wood laminate
+    -Adjustable Height Training Table – Flip-top mechanism, nesting capability
+    -Portable Folding Picnic Table Set – Integrated bench seating, weather-resistant
+    -Round Glass Top Event Table – Tempered glass, steel pedestal base
+    -Mobile Catering Prep Table – Stainless steel surface, caster wheels
+    -Kids Folding Event Table – Lightweight plastic, safety-rounded edges
+    -Industrial Buffet Serving Table – Heat-resistant surface, modular connectors
+* What business processes exist?
+    Raw Material Procurement
+    Production Planning
+    Manufacturing & Assembly
+    Quality Inspection
+    Inventory Storage (Warehouses)
+    Order Processing
+    Distribution & Shipping
+    Returns Handling
+    Maintenance & Equipment Upkeep
+    Sales Order Management
