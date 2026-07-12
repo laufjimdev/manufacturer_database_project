@@ -1,66 +1,68 @@
 from db_connection import get_connection
 
-factories = [
+def generateFactories():
 
-    ("F1",
-     "Dallas–Fort Worth Factory",
-     "Dallas–Fort Worth",
-     "Texas",
-     1200),
+    factories = [
 
-    ("F2",
-     "Atlanta Metro Factory",
-     "Atlanta",
-     "Georgia",
-     1000),
+        ("F1",
+        "Dallas–Fort Worth Factory",
+        "Dallas–Fort Worth",
+        "Texas",
+        1200),
 
-    ("F3",
-     "Phoenix–Buckeye Factory",
-     "Buckeye",
-     "Arizona",
-     900)
+        ("F2",
+        "Atlanta Metro Factory",
+        "Atlanta",
+        "Georgia",
+        1000),
 
-]
+        ("F3",
+        "Phoenix–Buckeye Factory",
+        "Buckeye",
+        "Arizona",
+        900)
 
-connection = get_connection()
+    ]
 
-cursor = connection.cursor()
+    connection = get_connection()
 
-insert_query = """
+    cursor = connection.cursor()
 
-INSERT INTO factories
-(
-    factory_id,
-    factory_name,
-    city,
-    state,
-    capacity_units_per_day,
-    manager_employee_id
-)
+    insert_query = """
 
-VALUES
-(
-    %s,
-    %s,
-    %s,
-    %s,
-    %s,
-    NULL
-);
+    INSERT INTO factories
+    (
+        factory_id,
+        factory_name,
+        city,
+        state,
+        capacity_units_per_day,
+        manager_employee_id
+    )
 
-ON CONFLICT (factory_id)
-DO NOTHING;
+    VALUES
+    (
+        %s,
+        %s,
+        %s,
+        %s,
+        %s,
+        NULL
+    )
 
-"""
+    ON CONFLICT (factory_id)
+    DO NOTHING;
 
-for factory in factories:
+    """
 
-    cursor.execute(insert_query, factory)
+    for factory in factories:
 
-connection.commit()
+        cursor.execute(insert_query, factory)
 
-cursor.close()
+    connection.commit()
 
-connection.close()
+    cursor.close()
 
-print("Factories inserted successfully.")
+    connection.close()
+
+    print("Factories inserted successfully.")
