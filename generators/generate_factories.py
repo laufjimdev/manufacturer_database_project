@@ -48,6 +48,9 @@ VALUES
     NULL
 );
 
+ON CONFLICT (factory_id)
+DO NOTHING;
+
 """
 
 for factory in factories:
