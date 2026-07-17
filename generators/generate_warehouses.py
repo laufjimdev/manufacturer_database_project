@@ -1,4 +1,4 @@
-from db_connection import get_connection
+from database.db_connection import get_connection
 
 warehouses = [
 
