@@ -1,3 +1,0 @@
-from generate_factories import generateFactories
-
-generateFactories()

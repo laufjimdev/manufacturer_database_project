@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict W8nV3JJoAlyph0zEt5QHTxQT1fKaes8jmjQaBTHpkJcX2chNBPs1egs4REA6Us3
+\restrict Mbo8ivCXIVULvlAYhrVMoVqwogVm0O9RXyHg0n2nOfGEHrj7ViCWPpzUOyghp3N
 
 -- Dumped from database version 18.4 (Homebrew)
 -- Dumped by pg_dump version 18.4
 
--- Started on 2026-07-10 11:13:29 MST
+-- Started on 2026-07-21 14:02:30 MST
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -32,7 +32,7 @@ CREATE SCHEMA public;
 ALTER SCHEMA public OWNER TO pg_database_owner;
 
 --
--- TOC entry 4275 (class 0 OID 0)
+-- TOC entry 4280 (class 0 OID 0)
 -- Dependencies: 4
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
 --
@@ -41,7 +41,7 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
--- TOC entry 1032 (class 1247 OID 18114)
+-- TOC entry 1027 (class 1247 OID 18114)
 -- Name: received_item; Type: TYPE; Schema: public; Owner: lauradev
 --
 
@@ -54,7 +54,7 @@ CREATE TYPE public.received_item AS (
 ALTER TYPE public.received_item OWNER TO lauradev;
 
 --
--- TOC entry 280 (class 1255 OID 18107)
+-- TOC entry 281 (class 1255 OID 18107)
 -- Name: place_sales_order(integer, date, character, jsonb, text); Type: PROCEDURE; Schema: public; Owner: lauradev
 --
 
@@ -127,7 +127,7 @@ $$;
 ALTER PROCEDURE public.place_sales_order(IN p_customer_id integer, IN p_order_date date, IN p_warehouse_id character, IN p_products jsonb, IN p_shipping_address text) OWNER TO lauradev;
 
 --
--- TOC entry 292 (class 1255 OID 18116)
+-- TOC entry 293 (class 1255 OID 18116)
 -- Name: process_return(integer, integer, integer, character varying, boolean, character varying, integer, text); Type: PROCEDURE; Schema: public; Owner: lauradev
 --
 
@@ -218,7 +218,7 @@ $$;
 ALTER PROCEDURE public.process_return(IN p_sales_order_id integer, IN p_product_id integer, IN p_quantity integer, IN p_reason character varying, IN p_restock boolean, IN p_condition character varying, IN p_handled_by_employee_id integer, IN p_notes text) OWNER TO lauradev;
 
 --
--- TOC entry 293 (class 1255 OID 18115)
+-- TOC entry 294 (class 1255 OID 18115)
 -- Name: receive_m_purchase_order(integer, character, public.received_item[]); Type: PROCEDURE; Schema: public; Owner: lauradev
 --
 
@@ -336,7 +336,6 @@ CREATE TABLE public.products (
     product_name character varying(100) NOT NULL,
     description text,
     category_id integer NOT NULL,
-    material_type character varying(50),
     dimensions character varying(100),
     weight numeric(10,2),
     load_capacity numeric(10,2),
@@ -498,9 +497,9 @@ CREATE TABLE public.warehouses (
     warehouse_name character varying(100) NOT NULL,
     city character varying(80),
     state character varying(80),
-    capacity integer DEFAULT 0 NOT NULL,
+    storage_capacity_units integer DEFAULT 0 CONSTRAINT warehouses_capacity_not_null NOT NULL,
     manager_employee_id integer,
-    CONSTRAINT chk_warehouses_capacity CHECK ((capacity >= 0))
+    CONSTRAINT chk_warehouses_capacity CHECK ((storage_capacity_units >= 0))
 );
 
 
@@ -594,20 +593,20 @@ ALTER VIEW public.failed_quality_inspections OWNER TO lauradev;
 
 --
 -- TOC entry 230 (class 1259 OID 17029)
--- Name: inventory; Type: TABLE; Schema: public; Owner: lauradev
+-- Name: products_inventory; Type: TABLE; Schema: public; Owner: lauradev
 --
 
-CREATE TABLE public.inventory (
-    inventory_id integer NOT NULL,
-    warehouse_id character(2) NOT NULL,
-    product_id integer NOT NULL,
-    quantity_on_hand integer DEFAULT 0 NOT NULL,
-    reorder_level integer DEFAULT 0 NOT NULL,
-    last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE public.products_inventory (
+    inventory_id integer CONSTRAINT inventory_inventory_id_not_null NOT NULL,
+    warehouse_id character(2) CONSTRAINT inventory_warehouse_id_not_null NOT NULL,
+    product_id integer CONSTRAINT inventory_product_id_not_null NOT NULL,
+    quantity_on_hand integer DEFAULT 0 CONSTRAINT inventory_quantity_on_hand_not_null NOT NULL,
+    reorder_level integer DEFAULT 0 CONSTRAINT inventory_reorder_level_not_null NOT NULL,
+    last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP CONSTRAINT inventory_last_updated_not_null NOT NULL
 );
 
 
-ALTER TABLE public.inventory OWNER TO lauradev;
+ALTER TABLE public.products_inventory OWNER TO lauradev;
 
 --
 -- TOC entry 267 (class 1259 OID 18047)
@@ -623,7 +622,7 @@ CREATE VIEW public.inventory_below_reorder AS
     (i.reorder_level - i.quantity_on_hand) AS units_short,
     w.warehouse_name,
     i.last_updated
-   FROM ((public.inventory i
+   FROM ((public.products_inventory i
      JOIN public.products p ON ((i.product_id = p.product_id)))
      JOIN public.warehouses w ON ((i.warehouse_id = w.warehouse_id)))
   WHERE (i.quantity_on_hand <= i.reorder_level)
@@ -637,7 +636,7 @@ ALTER VIEW public.inventory_below_reorder OWNER TO lauradev;
 -- Name: inventory_inventory_id_seq; Type: SEQUENCE; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE public.inventory ALTER COLUMN inventory_id ADD GENERATED BY DEFAULT AS IDENTITY (
+ALTER TABLE public.products_inventory ALTER COLUMN inventory_id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.inventory_inventory_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -855,49 +854,30 @@ ALTER TABLE public.maintenance_plans ALTER COLUMN maintenance_plan_id ADD GENERA
 
 
 --
--- TOC entry 229 (class 1259 OID 17013)
--- Name: materials; Type: TABLE; Schema: public; Owner: lauradev
---
-
-CREATE TABLE public.materials (
-    material_id integer NOT NULL,
-    material_name character varying(100) NOT NULL,
-    material_type character varying(50),
-    unit_cost numeric(12,2) DEFAULT 0 NOT NULL,
-    unit_of_measure character varying(30) NOT NULL,
-    supplier_id integer NOT NULL,
-    CONSTRAINT chk_materials_unit_cost CHECK ((unit_cost >= (0)::numeric)),
-    CONSTRAINT chk_materials_uom CHECK (((unit_of_measure)::text = ANY ((ARRAY['units'::character varying, 'kg'::character varying, 'lbs'::character varying, 'meters'::character varying, 'feet'::character varying, 'liters'::character varying, 'gallons'::character varying, 'sqft'::character varying, 'sqm'::character varying, 'yards'::character varying, 'board_feet'::character varying])::text[])))
-);
-
-
-ALTER TABLE public.materials OWNER TO lauradev;
-
---
 -- TOC entry 242 (class 1259 OID 17345)
--- Name: materials_inventory; Type: TABLE; Schema: public; Owner: lauradev
+-- Name: raw_materials_inventory; Type: TABLE; Schema: public; Owner: lauradev
 --
 
-CREATE TABLE public.materials_inventory (
-    materials_inventory_id integer NOT NULL,
-    material_id integer NOT NULL,
-    factory_id character(2) NOT NULL,
-    quantity_on_hand numeric(12,2) DEFAULT 0 NOT NULL,
-    reorder_level numeric(12,2) DEFAULT 0 NOT NULL,
-    last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+CREATE TABLE public.raw_materials_inventory (
+    materials_inventory_id integer CONSTRAINT materials_inventory_materials_inventory_id_not_null NOT NULL,
+    material_id integer CONSTRAINT materials_inventory_material_id_not_null NOT NULL,
+    factory_id character(2) CONSTRAINT materials_inventory_factory_id_not_null NOT NULL,
+    quantity_on_hand numeric(12,2) DEFAULT 0 CONSTRAINT materials_inventory_quantity_on_hand_not_null NOT NULL,
+    reorder_level numeric(12,2) DEFAULT 0 CONSTRAINT materials_inventory_reorder_level_not_null NOT NULL,
+    last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP CONSTRAINT materials_inventory_last_updated_not_null NOT NULL,
     CONSTRAINT chk_mat_inv_quantity CHECK ((quantity_on_hand >= (0)::numeric)),
     CONSTRAINT chk_mat_inv_reorder CHECK ((reorder_level >= (0)::numeric))
 );
 
 
-ALTER TABLE public.materials_inventory OWNER TO lauradev;
+ALTER TABLE public.raw_materials_inventory OWNER TO lauradev;
 
 --
 -- TOC entry 251 (class 1259 OID 17867)
 -- Name: materials_inventory_materials_inventory_id_seq; Type: SEQUENCE; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE public.materials_inventory ALTER COLUMN materials_inventory_id ADD GENERATED BY DEFAULT AS IDENTITY (
+ALTER TABLE public.raw_materials_inventory ALTER COLUMN materials_inventory_id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.materials_inventory_materials_inventory_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -908,11 +888,31 @@ ALTER TABLE public.materials_inventory ALTER COLUMN materials_inventory_id ADD G
 
 
 --
+-- TOC entry 229 (class 1259 OID 17013)
+-- Name: raw_materials; Type: TABLE; Schema: public; Owner: lauradev
+--
+
+CREATE TABLE public.raw_materials (
+    material_id integer CONSTRAINT materials_material_id_not_null NOT NULL,
+    material_name character varying(100) CONSTRAINT materials_material_name_not_null NOT NULL,
+    material_type character varying(50),
+    unit_cost numeric(12,2) DEFAULT 0 CONSTRAINT materials_unit_cost_not_null NOT NULL,
+    unit_of_measure character varying(30) CONSTRAINT materials_unit_of_measure_not_null NOT NULL,
+    supplier_id integer CONSTRAINT materials_supplier_id_not_null NOT NULL,
+    dimensions character varying(100),
+    CONSTRAINT chk_materials_unit_cost CHECK ((unit_cost >= (0)::numeric)),
+    CONSTRAINT chk_materials_uom CHECK (((unit_of_measure)::text = ANY ((ARRAY['units'::character varying, 'kg'::character varying, 'lbs'::character varying, 'meters'::character varying, 'feet'::character varying, 'liters'::character varying, 'gallons'::character varying, 'sqft'::character varying, 'sqm'::character varying, 'yards'::character varying, 'board_feet'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.raw_materials OWNER TO lauradev;
+
+--
 -- TOC entry 250 (class 1259 OID 17866)
 -- Name: materials_material_id_seq; Type: SEQUENCE; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE public.materials ALTER COLUMN material_id ADD GENERATED BY DEFAULT AS IDENTITY (
+ALTER TABLE public.raw_materials ALTER COLUMN material_id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.materials_material_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -930,15 +930,15 @@ ALTER TABLE public.materials ALTER COLUMN material_id ADD GENERATED BY DEFAULT A
 CREATE TABLE public.suppliers (
     supplier_id integer NOT NULL,
     supplier_name character varying(100) NOT NULL,
-    contact_name character varying(100),
+    contact_name character varying(100) NOT NULL,
     phone character(30),
-    email character varying(100),
-    address text,
+    email character varying(100) NOT NULL,
+    street text,
     city character varying(80),
     state character varying(80),
-    country character(2),
     lead_time_days integer,
     rating numeric(3,1),
+    zipcode character(10) NOT NULL,
     CONSTRAINT chk_suppliers_email CHECK (((email)::text ~~ '%@%.%'::text)),
     CONSTRAINT chk_suppliers_lead_time CHECK ((lead_time_days > 0)),
     CONSTRAINT chk_suppliers_rating CHECK (((rating >= (0)::numeric) AND (rating <= (10)::numeric)))
@@ -963,8 +963,8 @@ CREATE VIEW public.materials_to_reorder AS
     f.factory_name,
     s.supplier_name,
     s.lead_time_days
-   FROM (((public.materials_inventory mi
-     JOIN public.materials m ON ((mi.material_id = m.material_id)))
+   FROM (((public.raw_materials_inventory mi
+     JOIN public.raw_materials m ON ((mi.material_id = m.material_id)))
      JOIN public.factories f ON ((mi.factory_id = f.factory_id)))
      JOIN public.suppliers s ON ((m.supplier_id = s.supplier_id)))
   WHERE (mi.quantity_on_hand <= mi.reorder_level)
@@ -1200,6 +1200,20 @@ ALTER TABLE public.product_categories ALTER COLUMN category_id ADD GENERATED BY 
 
 
 --
+-- TOC entry 280 (class 1259 OID 18205)
+-- Name: product_materials; Type: TABLE; Schema: public; Owner: lauradev
+--
+
+CREATE TABLE public.product_materials (
+    product_id integer NOT NULL,
+    material_id integer NOT NULL,
+    quantity_required integer
+);
+
+
+ALTER TABLE public.product_materials OWNER TO lauradev;
+
+--
 -- TOC entry 253 (class 1259 OID 17869)
 -- Name: production_lines_production_line_id_seq; Type: SEQUENCE; Schema: public; Owner: lauradev
 --
@@ -1224,7 +1238,7 @@ CREATE VIEW public.products_on_hand AS
     p.product_name,
     i.quantity_on_hand,
     w.warehouse_name
-   FROM ((public.inventory i
+   FROM ((public.products_inventory i
      JOIN public.products p ON ((i.product_id = p.product_id)))
      JOIN public.warehouses w ON ((i.warehouse_id = w.warehouse_id)))
   ORDER BY w.warehouse_name;
@@ -1444,7 +1458,7 @@ CREATE VIEW public.supplier_catalog AS
     m.unit_cost,
     m.unit_of_measure
    FROM (public.suppliers s
-     JOIN public.materials m ON ((s.supplier_id = m.supplier_id)))
+     JOIN public.raw_materials m ON ((s.supplier_id = m.supplier_id)))
   ORDER BY s.rating DESC, s.supplier_name;
 
 
@@ -1481,7 +1495,7 @@ ALTER TABLE public.work_orders ALTER COLUMN work_order_id ADD GENERATED BY DEFAU
 
 
 --
--- TOC entry 4227 (class 0 OID 16861)
+-- TOC entry 4231 (class 0 OID 16861)
 -- Dependencies: 221
 -- Data for Name: customers; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1491,7 +1505,7 @@ COPY public.customers (customer_id, customer_name, contact_name, email, phone, b
 
 
 --
--- TOC entry 4231 (class 0 OID 16906)
+-- TOC entry 4235 (class 0 OID 16906)
 -- Dependencies: 225
 -- Data for Name: departments; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1501,7 +1515,7 @@ COPY public.departments (department_id, department_name, location_type, factory_
 
 
 --
--- TOC entry 4230 (class 0 OID 16894)
+-- TOC entry 4234 (class 0 OID 16894)
 -- Dependencies: 224
 -- Data for Name: employees; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1511,27 +1525,20 @@ COPY public.employees (employee_id, first_name, last_name, email, phone, job_tit
 
 
 --
--- TOC entry 4228 (class 0 OID 16874)
+-- TOC entry 4232 (class 0 OID 16874)
 -- Dependencies: 222
 -- Data for Name: factories; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
 
 COPY public.factories (factory_id, factory_name, city, state, capacity_units_per_day, manager_employee_id) FROM stdin;
+F1	Dallas–Fort Worth Factory	Dallas–Fort Worth	Texas	1200	\N
+F2	Atlanta Metro Factory	Atlanta	Georgia	1000	\N
+F3	Phoenix–Buckeye Factory	Buckeye	Arizona	900	\N
 \.
 
 
 --
--- TOC entry 4236 (class 0 OID 17029)
--- Dependencies: 230
--- Data for Name: inventory; Type: TABLE DATA; Schema: public; Owner: lauradev
---
-
-COPY public.inventory (inventory_id, warehouse_id, product_id, quantity_on_hand, reorder_level, last_updated) FROM stdin;
-\.
-
-
---
--- TOC entry 4239 (class 0 OID 17094)
+-- TOC entry 4243 (class 0 OID 17094)
 -- Dependencies: 233
 -- Data for Name: machine_downtime; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1541,7 +1548,7 @@ COPY public.machine_downtime (downtime_id, machine_id, start_time, end_time, dow
 
 
 --
--- TOC entry 4234 (class 0 OID 16998)
+-- TOC entry 4238 (class 0 OID 16998)
 -- Dependencies: 228
 -- Data for Name: machines; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1551,7 +1558,7 @@ COPY public.machines (machine_id, production_line_id, machine_name, machine_type
 
 
 --
--- TOC entry 4237 (class 0 OID 17053)
+-- TOC entry 4241 (class 0 OID 17053)
 -- Dependencies: 231
 -- Data for Name: maintenance_logs; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1561,7 +1568,7 @@ COPY public.maintenance_logs (maintenance_log_id, machine_id, maintenance_date, 
 
 
 --
--- TOC entry 4238 (class 0 OID 17074)
+-- TOC entry 4242 (class 0 OID 17074)
 -- Dependencies: 232
 -- Data for Name: maintenance_plans; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1571,27 +1578,7 @@ COPY public.maintenance_plans (maintenance_plan_id, machine_id, maintenance_type
 
 
 --
--- TOC entry 4235 (class 0 OID 17013)
--- Dependencies: 229
--- Data for Name: materials; Type: TABLE DATA; Schema: public; Owner: lauradev
---
-
-COPY public.materials (material_id, material_name, material_type, unit_cost, unit_of_measure, supplier_id) FROM stdin;
-\.
-
-
---
--- TOC entry 4248 (class 0 OID 17345)
--- Dependencies: 242
--- Data for Name: materials_inventory; Type: TABLE DATA; Schema: public; Owner: lauradev
---
-
-COPY public.materials_inventory (materials_inventory_id, material_id, factory_id, quantity_on_hand, reorder_level, last_updated) FROM stdin;
-\.
-
-
---
--- TOC entry 4225 (class 0 OID 16843)
+-- TOC entry 4229 (class 0 OID 16843)
 -- Dependencies: 219
 -- Data for Name: product_categories; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1601,7 +1588,17 @@ COPY public.product_categories (category_id, category_name, description) FROM st
 
 
 --
--- TOC entry 4232 (class 0 OID 16955)
+-- TOC entry 4274 (class 0 OID 18205)
+-- Dependencies: 280
+-- Data for Name: product_materials; Type: TABLE DATA; Schema: public; Owner: lauradev
+--
+
+COPY public.product_materials (product_id, material_id, quantity_required) FROM stdin;
+\.
+
+
+--
+-- TOC entry 4236 (class 0 OID 16955)
 -- Dependencies: 226
 -- Data for Name: production_lines; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1611,17 +1608,27 @@ COPY public.production_lines (production_line_id, factory_id, line_name, line_ty
 
 
 --
--- TOC entry 4233 (class 0 OID 16972)
+-- TOC entry 4237 (class 0 OID 16972)
 -- Dependencies: 227
 -- Data for Name: products; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
 
-COPY public.products (product_id, product_name, description, category_id, material_type, dimensions, weight, load_capacity, unit_cost, selling_price, production_time_days, active_flag, production_line_id) FROM stdin;
+COPY public.products (product_id, product_name, description, category_id, dimensions, weight, load_capacity, unit_cost, selling_price, production_time_days, active_flag, production_line_id) FROM stdin;
 \.
 
 
 --
--- TOC entry 4241 (class 0 OID 17126)
+-- TOC entry 4240 (class 0 OID 17029)
+-- Dependencies: 230
+-- Data for Name: products_inventory; Type: TABLE DATA; Schema: public; Owner: lauradev
+--
+
+COPY public.products_inventory (inventory_id, warehouse_id, product_id, quantity_on_hand, reorder_level, last_updated) FROM stdin;
+\.
+
+
+--
+-- TOC entry 4245 (class 0 OID 17126)
 -- Dependencies: 235
 -- Data for Name: purchase_order_items; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1631,7 +1638,7 @@ COPY public.purchase_order_items (purchase_order_item_id, purchase_order_id, mat
 
 
 --
--- TOC entry 4240 (class 0 OID 17109)
+-- TOC entry 4244 (class 0 OID 17109)
 -- Dependencies: 234
 -- Data for Name: purchase_orders; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1641,7 +1648,7 @@ COPY public.purchase_orders (purchase_order_id, supplier_id, order_date, expecte
 
 
 --
--- TOC entry 4246 (class 0 OID 17249)
+-- TOC entry 4250 (class 0 OID 17249)
 -- Dependencies: 240
 -- Data for Name: quality_inspections; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1651,7 +1658,27 @@ COPY public.quality_inspections (inspection_id, product_id, factory_id, producti
 
 
 --
--- TOC entry 4247 (class 0 OID 17284)
+-- TOC entry 4239 (class 0 OID 17013)
+-- Dependencies: 229
+-- Data for Name: raw_materials; Type: TABLE DATA; Schema: public; Owner: lauradev
+--
+
+COPY public.raw_materials (material_id, material_name, material_type, unit_cost, unit_of_measure, supplier_id, dimensions) FROM stdin;
+\.
+
+
+--
+-- TOC entry 4252 (class 0 OID 17345)
+-- Dependencies: 242
+-- Data for Name: raw_materials_inventory; Type: TABLE DATA; Schema: public; Owner: lauradev
+--
+
+COPY public.raw_materials_inventory (materials_inventory_id, material_id, factory_id, quantity_on_hand, reorder_level, last_updated) FROM stdin;
+\.
+
+
+--
+-- TOC entry 4251 (class 0 OID 17284)
 -- Dependencies: 241
 -- Data for Name: returns; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1661,7 +1688,7 @@ COPY public.returns (return_id, sales_order_id, customer_id, product_id, quantit
 
 
 --
--- TOC entry 4243 (class 0 OID 17175)
+-- TOC entry 4247 (class 0 OID 17175)
 -- Dependencies: 237
 -- Data for Name: sales_order_items; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1671,7 +1698,7 @@ COPY public.sales_order_items (sales_order_item_id, sales_order_id, product_id, 
 
 
 --
--- TOC entry 4242 (class 0 OID 17150)
+-- TOC entry 4246 (class 0 OID 17150)
 -- Dependencies: 236
 -- Data for Name: sales_orders; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1681,7 +1708,7 @@ COPY public.sales_orders (sales_order_id, customer_id, order_date, status, total
 
 
 --
--- TOC entry 4244 (class 0 OID 17199)
+-- TOC entry 4248 (class 0 OID 17199)
 -- Dependencies: 238
 -- Data for Name: shipments; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1691,27 +1718,37 @@ COPY public.shipments (shipment_id, sales_order_id, warehouse_id, ship_date, del
 
 
 --
--- TOC entry 4226 (class 0 OID 16852)
+-- TOC entry 4230 (class 0 OID 16852)
 -- Dependencies: 220
 -- Data for Name: suppliers; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
 
-COPY public.suppliers (supplier_id, supplier_name, contact_name, phone, email, address, city, state, country, lead_time_days, rating) FROM stdin;
+COPY public.suppliers (supplier_id, supplier_name, contact_name, phone, email, street, city, state, lead_time_days, rating, zipcode) FROM stdin;
+1	Chang-Fisher	Jonathan Dixon	\N	jonathan.dixon@chang-fisher.com	7593 Juan Throughway Apt. 948	Phoenix	AZ	7	7.5	85924     
+2	Blair Ltd	Mark Castro	\N	mark.castro@blairltd.com	5938 Ramos Pike Suite 080	Dallas	TX	3	9.0	75160     
+3	Snyder, Dillon and Sanchez	Mark Harrell	\N	mark.harrell@snyderdillonandsanchez.com	332 Davis Island	Atlanta	GA	5	8.5	30871     
+4	Arnold-Mann	Amy Olsen	\N	amy.olsen@arnold-mann.com	894 Davis Union	Atlanta	GA	3	8.5	30659     
+5	Roberts and Sons	Lori Johnson	\N	lori.johnson@robertsandsons.com	1122 Megan Squares Suite 848	Atlanta	GA	7	6.0	30339     
+6	Riley-Hayes	Donna Davies	\N	donna.davies@riley-hayes.com	59179 Bruce Gardens Apt. 413	Phoenix	AZ	5	7.5	85525     
+7	Cabrera-Garcia	Dustin Wolfe	\N	dustin.wolfe@cabrera-garcia.com	891 David Field	Atlanta	GA	3	9.0	30991     
+8	Davis-Bass	Darren Jacobs	\N	darren.jacobs@davis-bass.com	17300 Oliver Village	Atlanta	GA	5	8.5	30413     
+9	Lucas LLC	Ryan Brown	\N	ryan.brown@lucasllc.com	91634 Strong Mountains Apt. 302	Dallas	TX	2	10.0	75258     
+10	Wilson-Morse	Elizabeth Smith	\N	elizabeth.smith@wilson-morse.com	845 Monroe Glen Apt. 807	Dallas	TX	5	8.0	75150     
 \.
 
 
 --
--- TOC entry 4229 (class 0 OID 16884)
+-- TOC entry 4233 (class 0 OID 16884)
 -- Dependencies: 223
 -- Data for Name: warehouses; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
 
-COPY public.warehouses (warehouse_id, warehouse_name, city, state, capacity, manager_employee_id) FROM stdin;
+COPY public.warehouses (warehouse_id, warehouse_name, city, state, storage_capacity_units, manager_employee_id) FROM stdin;
 \.
 
 
 --
--- TOC entry 4245 (class 0 OID 17219)
+-- TOC entry 4249 (class 0 OID 17219)
 -- Dependencies: 239
 -- Data for Name: work_orders; Type: TABLE DATA; Schema: public; Owner: lauradev
 --
@@ -1721,7 +1758,7 @@ COPY public.work_orders (work_order_id, factory_id, production_line_id, product_
 
 
 --
--- TOC entry 4276 (class 0 OID 0)
+-- TOC entry 4281 (class 0 OID 0)
 -- Dependencies: 243
 -- Name: customers_customer_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1730,7 +1767,7 @@ SELECT pg_catalog.setval('public.customers_customer_id_seq', 1, false);
 
 
 --
--- TOC entry 4277 (class 0 OID 0)
+-- TOC entry 4282 (class 0 OID 0)
 -- Dependencies: 244
 -- Name: employees_employee_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1739,7 +1776,7 @@ SELECT pg_catalog.setval('public.employees_employee_id_seq', 1, false);
 
 
 --
--- TOC entry 4278 (class 0 OID 0)
+-- TOC entry 4283 (class 0 OID 0)
 -- Dependencies: 245
 -- Name: inventory_inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1748,7 +1785,7 @@ SELECT pg_catalog.setval('public.inventory_inventory_id_seq', 1, false);
 
 
 --
--- TOC entry 4279 (class 0 OID 0)
+-- TOC entry 4284 (class 0 OID 0)
 -- Dependencies: 246
 -- Name: machine_downtime_downtime_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1757,7 +1794,7 @@ SELECT pg_catalog.setval('public.machine_downtime_downtime_id_seq', 1, false);
 
 
 --
--- TOC entry 4280 (class 0 OID 0)
+-- TOC entry 4285 (class 0 OID 0)
 -- Dependencies: 247
 -- Name: machines_machine_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1766,7 +1803,7 @@ SELECT pg_catalog.setval('public.machines_machine_id_seq', 1, false);
 
 
 --
--- TOC entry 4281 (class 0 OID 0)
+-- TOC entry 4286 (class 0 OID 0)
 -- Dependencies: 248
 -- Name: maintenance_logs_maintenance_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1775,7 +1812,7 @@ SELECT pg_catalog.setval('public.maintenance_logs_maintenance_log_id_seq', 1, fa
 
 
 --
--- TOC entry 4282 (class 0 OID 0)
+-- TOC entry 4287 (class 0 OID 0)
 -- Dependencies: 249
 -- Name: maintenance_plans_maintenance_plan_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1784,7 +1821,7 @@ SELECT pg_catalog.setval('public.maintenance_plans_maintenance_plan_id_seq', 1, 
 
 
 --
--- TOC entry 4283 (class 0 OID 0)
+-- TOC entry 4288 (class 0 OID 0)
 -- Dependencies: 251
 -- Name: materials_inventory_materials_inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1793,7 +1830,7 @@ SELECT pg_catalog.setval('public.materials_inventory_materials_inventory_id_seq'
 
 
 --
--- TOC entry 4284 (class 0 OID 0)
+-- TOC entry 4289 (class 0 OID 0)
 -- Dependencies: 250
 -- Name: materials_material_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1802,7 +1839,7 @@ SELECT pg_catalog.setval('public.materials_material_id_seq', 1, false);
 
 
 --
--- TOC entry 4285 (class 0 OID 0)
+-- TOC entry 4290 (class 0 OID 0)
 -- Dependencies: 252
 -- Name: product_categories_category_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1811,7 +1848,7 @@ SELECT pg_catalog.setval('public.product_categories_category_id_seq', 1, false);
 
 
 --
--- TOC entry 4286 (class 0 OID 0)
+-- TOC entry 4291 (class 0 OID 0)
 -- Dependencies: 253
 -- Name: production_lines_production_line_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1820,7 +1857,7 @@ SELECT pg_catalog.setval('public.production_lines_production_line_id_seq', 1, fa
 
 
 --
--- TOC entry 4287 (class 0 OID 0)
+-- TOC entry 4292 (class 0 OID 0)
 -- Dependencies: 254
 -- Name: products_product_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1829,7 +1866,7 @@ SELECT pg_catalog.setval('public.products_product_id_seq', 1, false);
 
 
 --
--- TOC entry 4288 (class 0 OID 0)
+-- TOC entry 4293 (class 0 OID 0)
 -- Dependencies: 255
 -- Name: purchase_order_items_purchase_order_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1838,7 +1875,7 @@ SELECT pg_catalog.setval('public.purchase_order_items_purchase_order_item_id_seq
 
 
 --
--- TOC entry 4289 (class 0 OID 0)
+-- TOC entry 4294 (class 0 OID 0)
 -- Dependencies: 256
 -- Name: purchase_orders_purchase_order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1847,7 +1884,7 @@ SELECT pg_catalog.setval('public.purchase_orders_purchase_order_id_seq', 1, fals
 
 
 --
--- TOC entry 4290 (class 0 OID 0)
+-- TOC entry 4295 (class 0 OID 0)
 -- Dependencies: 257
 -- Name: quality_inspections_inspection_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1856,7 +1893,7 @@ SELECT pg_catalog.setval('public.quality_inspections_inspection_id_seq', 1, fals
 
 
 --
--- TOC entry 4291 (class 0 OID 0)
+-- TOC entry 4296 (class 0 OID 0)
 -- Dependencies: 258
 -- Name: returns_return_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1865,7 +1902,7 @@ SELECT pg_catalog.setval('public.returns_return_id_seq', 1, false);
 
 
 --
--- TOC entry 4292 (class 0 OID 0)
+-- TOC entry 4297 (class 0 OID 0)
 -- Dependencies: 259
 -- Name: sales_order_items_sales_order_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1874,7 +1911,7 @@ SELECT pg_catalog.setval('public.sales_order_items_sales_order_item_id_seq', 1, 
 
 
 --
--- TOC entry 4293 (class 0 OID 0)
+-- TOC entry 4298 (class 0 OID 0)
 -- Dependencies: 260
 -- Name: sales_orders_sales_order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1883,7 +1920,7 @@ SELECT pg_catalog.setval('public.sales_orders_sales_order_id_seq', 1, false);
 
 
 --
--- TOC entry 4294 (class 0 OID 0)
+-- TOC entry 4299 (class 0 OID 0)
 -- Dependencies: 261
 -- Name: shipments_shipment_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1892,16 +1929,16 @@ SELECT pg_catalog.setval('public.shipments_shipment_id_seq', 1, false);
 
 
 --
--- TOC entry 4295 (class 0 OID 0)
+-- TOC entry 4300 (class 0 OID 0)
 -- Dependencies: 262
 -- Name: suppliers_supplier_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
 
-SELECT pg_catalog.setval('public.suppliers_supplier_id_seq', 1, false);
+SELECT pg_catalog.setval('public.suppliers_supplier_id_seq', 10, true);
 
 
 --
--- TOC entry 4296 (class 0 OID 0)
+-- TOC entry 4301 (class 0 OID 0)
 -- Dependencies: 263
 -- Name: work_orders_work_order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lauradev
 --
@@ -1910,7 +1947,7 @@ SELECT pg_catalog.setval('public.work_orders_work_order_id_seq', 1, false);
 
 
 --
--- TOC entry 3933 (class 2606 OID 17342)
+-- TOC entry 3937 (class 2606 OID 17342)
 -- Name: maintenance_logs chk_cost_non_negative; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -1919,7 +1956,7 @@ ALTER TABLE public.maintenance_logs
 
 
 --
--- TOC entry 3934 (class 2606 OID 17341)
+-- TOC entry 3938 (class 2606 OID 17341)
 -- Name: maintenance_logs chk_downtime_hours_non_negative; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -1928,7 +1965,7 @@ ALTER TABLE public.maintenance_logs
 
 
 --
--- TOC entry 3935 (class 2606 OID 17344)
+-- TOC entry 3939 (class 2606 OID 17344)
 -- Name: maintenance_plans chk_estimated_duration_hours_non_zero; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -1937,7 +1974,7 @@ ALTER TABLE public.maintenance_plans
 
 
 --
--- TOC entry 3936 (class 2606 OID 17343)
+-- TOC entry 3940 (class 2606 OID 17343)
 -- Name: maintenance_plans chk_frequency_days_non_zero; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -1946,7 +1983,7 @@ ALTER TABLE public.maintenance_plans
 
 
 --
--- TOC entry 3926 (class 2606 OID 17339)
+-- TOC entry 3930 (class 2606 OID 17339)
 -- Name: machines chk_hourly_rate_non_negative; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -1955,7 +1992,7 @@ ALTER TABLE public.machines
 
 
 --
--- TOC entry 3939 (class 2606 OID 17338)
+-- TOC entry 3943 (class 2606 OID 17338)
 -- Name: machine_downtime chk_impact_hours_non_negative; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -1964,16 +2001,16 @@ ALTER TABLE public.machine_downtime
 
 
 --
--- TOC entry 3931 (class 2606 OID 17336)
--- Name: inventory chk_inventory_quantity_non_negative; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 3935 (class 2606 OID 17336)
+-- Name: products_inventory chk_inventory_quantity_non_negative; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE public.inventory
+ALTER TABLE public.products_inventory
     ADD CONSTRAINT chk_inventory_quantity_non_negative CHECK ((quantity_on_hand >= 0)) NOT VALID;
 
 
 --
--- TOC entry 3928 (class 2606 OID 17340)
+-- TOC entry 3932 (class 2606 OID 17340)
 -- Name: machines chk_maintenance_cycle_days_non_zero; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -1982,16 +2019,16 @@ ALTER TABLE public.machines
 
 
 --
--- TOC entry 3932 (class 2606 OID 17337)
--- Name: inventory chk_reorder_level_non_negative; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 3936 (class 2606 OID 17337)
+-- Name: products_inventory chk_reorder_level_non_negative; Type: CHECK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE public.inventory
+ALTER TABLE public.products_inventory
     ADD CONSTRAINT chk_reorder_level_non_negative CHECK ((reorder_level >= 0)) NOT VALID;
 
 
 --
--- TOC entry 3971 (class 2606 OID 17333)
+-- TOC entry 3975 (class 2606 OID 17333)
 -- Name: customers customers_email_key; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2000,7 +2037,7 @@ ALTER TABLE ONLY public.customers
 
 
 --
--- TOC entry 3973 (class 2606 OID 17527)
+-- TOC entry 3977 (class 2606 OID 17527)
 -- Name: customers customers_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2009,7 +2046,7 @@ ALTER TABLE ONLY public.customers
 
 
 --
--- TOC entry 3983 (class 2606 OID 16914)
+-- TOC entry 3987 (class 2606 OID 16914)
 -- Name: departments departments_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2018,7 +2055,7 @@ ALTER TABLE ONLY public.departments
 
 
 --
--- TOC entry 3979 (class 2606 OID 17335)
+-- TOC entry 3983 (class 2606 OID 17335)
 -- Name: employees employees_email_key; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2027,7 +2064,7 @@ ALTER TABLE ONLY public.employees
 
 
 --
--- TOC entry 3981 (class 2606 OID 17537)
+-- TOC entry 3985 (class 2606 OID 17537)
 -- Name: employees employees_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2036,7 +2073,7 @@ ALTER TABLE ONLY public.employees
 
 
 --
--- TOC entry 3975 (class 2606 OID 16883)
+-- TOC entry 3979 (class 2606 OID 16883)
 -- Name: factories factories_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2045,16 +2082,16 @@ ALTER TABLE ONLY public.factories
 
 
 --
--- TOC entry 3993 (class 2606 OID 17560)
--- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 3997 (class 2606 OID 17560)
+-- Name: products_inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE ONLY public.inventory
+ALTER TABLE ONLY public.products_inventory
     ADD CONSTRAINT inventory_pkey PRIMARY KEY (inventory_id);
 
 
 --
--- TOC entry 3999 (class 2606 OID 17572)
+-- TOC entry 4003 (class 2606 OID 17572)
 -- Name: machine_downtime machine_downtime_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2063,7 +2100,7 @@ ALTER TABLE ONLY public.machine_downtime
 
 
 --
--- TOC entry 3989 (class 2606 OID 17588)
+-- TOC entry 3993 (class 2606 OID 17588)
 -- Name: machines machines_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2072,7 +2109,7 @@ ALTER TABLE ONLY public.machines
 
 
 --
--- TOC entry 3995 (class 2606 OID 17600)
+-- TOC entry 3999 (class 2606 OID 17600)
 -- Name: maintenance_logs maintenance_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2081,7 +2118,7 @@ ALTER TABLE ONLY public.maintenance_logs
 
 
 --
--- TOC entry 3997 (class 2606 OID 17623)
+-- TOC entry 4001 (class 2606 OID 17623)
 -- Name: maintenance_plans maintenance_plans_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2090,34 +2127,34 @@ ALTER TABLE ONLY public.maintenance_plans
 
 
 --
--- TOC entry 4017 (class 2606 OID 18111)
--- Name: materials_inventory materials_inventory_material_factory_key; Type: CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 4021 (class 2606 OID 18111)
+-- Name: raw_materials_inventory materials_inventory_material_factory_key; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE ONLY public.materials_inventory
+ALTER TABLE ONLY public.raw_materials_inventory
     ADD CONSTRAINT materials_inventory_material_factory_key UNIQUE (material_id, factory_id);
 
 
 --
--- TOC entry 4019 (class 2606 OID 17652)
--- Name: materials_inventory materials_inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 4023 (class 2606 OID 17652)
+-- Name: raw_materials_inventory materials_inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE ONLY public.materials_inventory
+ALTER TABLE ONLY public.raw_materials_inventory
     ADD CONSTRAINT materials_inventory_pkey PRIMARY KEY (materials_inventory_id);
 
 
 --
--- TOC entry 3991 (class 2606 OID 17640)
--- Name: materials materials_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 3995 (class 2606 OID 17640)
+-- Name: raw_materials materials_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE ONLY public.materials
+ALTER TABLE ONLY public.raw_materials
     ADD CONSTRAINT materials_pkey PRIMARY KEY (material_id);
 
 
 --
--- TOC entry 3967 (class 2606 OID 17664)
+-- TOC entry 3971 (class 2606 OID 17664)
 -- Name: product_categories product_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2126,7 +2163,7 @@ ALTER TABLE ONLY public.product_categories
 
 
 --
--- TOC entry 3985 (class 2606 OID 17673)
+-- TOC entry 3989 (class 2606 OID 17673)
 -- Name: production_lines production_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2135,7 +2172,7 @@ ALTER TABLE ONLY public.production_lines
 
 
 --
--- TOC entry 3987 (class 2606 OID 17680)
+-- TOC entry 3991 (class 2606 OID 17680)
 -- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2144,7 +2181,7 @@ ALTER TABLE ONLY public.products
 
 
 --
--- TOC entry 4003 (class 2606 OID 17702)
+-- TOC entry 4007 (class 2606 OID 17702)
 -- Name: purchase_order_items purchase_order_items_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2153,7 +2190,7 @@ ALTER TABLE ONLY public.purchase_order_items
 
 
 --
--- TOC entry 4001 (class 2606 OID 17719)
+-- TOC entry 4005 (class 2606 OID 17719)
 -- Name: purchase_orders purchase_orders_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2162,7 +2199,7 @@ ALTER TABLE ONLY public.purchase_orders
 
 
 --
--- TOC entry 4013 (class 2606 OID 17731)
+-- TOC entry 4017 (class 2606 OID 17731)
 -- Name: quality_inspections quality_inspections_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2171,7 +2208,7 @@ ALTER TABLE ONLY public.quality_inspections
 
 
 --
--- TOC entry 4015 (class 2606 OID 17753)
+-- TOC entry 4019 (class 2606 OID 17753)
 -- Name: returns returns_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2180,7 +2217,7 @@ ALTER TABLE ONLY public.returns
 
 
 --
--- TOC entry 4007 (class 2606 OID 17789)
+-- TOC entry 4011 (class 2606 OID 17789)
 -- Name: sales_order_items sales_order_items_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2189,7 +2226,7 @@ ALTER TABLE ONLY public.sales_order_items
 
 
 --
--- TOC entry 4005 (class 2606 OID 17806)
+-- TOC entry 4009 (class 2606 OID 17806)
 -- Name: sales_orders sales_orders_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2198,7 +2235,7 @@ ALTER TABLE ONLY public.sales_orders
 
 
 --
--- TOC entry 4009 (class 2606 OID 17822)
+-- TOC entry 4013 (class 2606 OID 17822)
 -- Name: shipments shipments_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2207,7 +2244,7 @@ ALTER TABLE ONLY public.shipments
 
 
 --
--- TOC entry 3969 (class 2606 OID 17834)
+-- TOC entry 3973 (class 2606 OID 17834)
 -- Name: suppliers suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2216,7 +2253,7 @@ ALTER TABLE ONLY public.suppliers
 
 
 --
--- TOC entry 3977 (class 2606 OID 16893)
+-- TOC entry 3981 (class 2606 OID 16893)
 -- Name: warehouses warehouses_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2225,7 +2262,7 @@ ALTER TABLE ONLY public.warehouses
 
 
 --
--- TOC entry 4011 (class 2606 OID 17843)
+-- TOC entry 4015 (class 2606 OID 17843)
 -- Name: work_orders work_orders_pkey; Type: CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2234,7 +2271,7 @@ ALTER TABLE ONLY public.work_orders
 
 
 --
--- TOC entry 4025 (class 2606 OID 16935)
+-- TOC entry 4029 (class 2606 OID 16935)
 -- Name: departments fk_departments_factory; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2243,7 +2280,7 @@ ALTER TABLE ONLY public.departments
 
 
 --
--- TOC entry 4026 (class 2606 OID 17880)
+-- TOC entry 4030 (class 2606 OID 17880)
 -- Name: departments fk_departments_supervisor; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2252,7 +2289,7 @@ ALTER TABLE ONLY public.departments
 
 
 --
--- TOC entry 4027 (class 2606 OID 16940)
+-- TOC entry 4031 (class 2606 OID 16940)
 -- Name: departments fk_departments_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2261,7 +2298,7 @@ ALTER TABLE ONLY public.departments
 
 
 --
--- TOC entry 4022 (class 2606 OID 16915)
+-- TOC entry 4026 (class 2606 OID 16915)
 -- Name: employees fk_employees_department; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2270,7 +2307,7 @@ ALTER TABLE ONLY public.employees
 
 
 --
--- TOC entry 4023 (class 2606 OID 16920)
+-- TOC entry 4027 (class 2606 OID 16920)
 -- Name: employees fk_employees_factory; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2279,7 +2316,7 @@ ALTER TABLE ONLY public.employees
 
 
 --
--- TOC entry 4024 (class 2606 OID 16925)
+-- TOC entry 4028 (class 2606 OID 16925)
 -- Name: employees fk_employees_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2288,7 +2325,7 @@ ALTER TABLE ONLY public.employees
 
 
 --
--- TOC entry 4020 (class 2606 OID 17885)
+-- TOC entry 4024 (class 2606 OID 17885)
 -- Name: factories fk_factories_manager; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2297,25 +2334,25 @@ ALTER TABLE ONLY public.factories
 
 
 --
--- TOC entry 4033 (class 2606 OID 17895)
--- Name: inventory fk_inventory_product; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 4037 (class 2606 OID 17895)
+-- Name: products_inventory fk_inventory_product; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE ONLY public.inventory
+ALTER TABLE ONLY public.products_inventory
     ADD CONSTRAINT fk_inventory_product FOREIGN KEY (product_id) REFERENCES public.products(product_id);
 
 
 --
--- TOC entry 4034 (class 2606 OID 17043)
--- Name: inventory fk_inventory_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 4038 (class 2606 OID 17043)
+-- Name: products_inventory fk_inventory_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE ONLY public.inventory
+ALTER TABLE ONLY public.products_inventory
     ADD CONSTRAINT fk_inventory_warehouse FOREIGN KEY (warehouse_id) REFERENCES public.warehouses(warehouse_id);
 
 
 --
--- TOC entry 4039 (class 2606 OID 17900)
+-- TOC entry 4043 (class 2606 OID 17900)
 -- Name: machine_downtime fk_machine_downtime_machine; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2324,7 +2361,7 @@ ALTER TABLE ONLY public.machine_downtime
 
 
 --
--- TOC entry 4031 (class 2606 OID 17905)
+-- TOC entry 4035 (class 2606 OID 17905)
 -- Name: machines fk_machines_production_line; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2333,7 +2370,7 @@ ALTER TABLE ONLY public.machines
 
 
 --
--- TOC entry 4035 (class 2606 OID 17910)
+-- TOC entry 4039 (class 2606 OID 17910)
 -- Name: maintenance_logs fk_maintenance_logs_machine; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2342,7 +2379,7 @@ ALTER TABLE ONLY public.maintenance_logs
 
 
 --
--- TOC entry 4036 (class 2606 OID 17915)
+-- TOC entry 4040 (class 2606 OID 17915)
 -- Name: maintenance_logs fk_maintenance_logs_technician; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2351,7 +2388,7 @@ ALTER TABLE ONLY public.maintenance_logs
 
 
 --
--- TOC entry 4037 (class 2606 OID 17920)
+-- TOC entry 4041 (class 2606 OID 17920)
 -- Name: maintenance_plans fk_maintenance_plans_employee; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2360,7 +2397,7 @@ ALTER TABLE ONLY public.maintenance_plans
 
 
 --
--- TOC entry 4038 (class 2606 OID 17925)
+-- TOC entry 4042 (class 2606 OID 17925)
 -- Name: maintenance_plans fk_maintenance_plans_machine; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2369,34 +2406,34 @@ ALTER TABLE ONLY public.maintenance_plans
 
 
 --
--- TOC entry 4061 (class 2606 OID 17366)
--- Name: materials_inventory fk_mat_inv_factory; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 4065 (class 2606 OID 17366)
+-- Name: raw_materials_inventory fk_mat_inv_factory; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE ONLY public.materials_inventory
+ALTER TABLE ONLY public.raw_materials_inventory
     ADD CONSTRAINT fk_mat_inv_factory FOREIGN KEY (factory_id) REFERENCES public.factories(factory_id);
 
 
 --
--- TOC entry 4062 (class 2606 OID 17935)
--- Name: materials_inventory fk_mat_inv_material; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 4066 (class 2606 OID 17935)
+-- Name: raw_materials_inventory fk_mat_inv_material; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE ONLY public.materials_inventory
-    ADD CONSTRAINT fk_mat_inv_material FOREIGN KEY (material_id) REFERENCES public.materials(material_id);
+ALTER TABLE ONLY public.raw_materials_inventory
+    ADD CONSTRAINT fk_mat_inv_material FOREIGN KEY (material_id) REFERENCES public.raw_materials(material_id);
 
 
 --
--- TOC entry 4032 (class 2606 OID 17930)
--- Name: materials fk_materials_supplier; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
+-- TOC entry 4036 (class 2606 OID 17930)
+-- Name: raw_materials fk_materials_supplier; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
-ALTER TABLE ONLY public.materials
+ALTER TABLE ONLY public.raw_materials
     ADD CONSTRAINT fk_materials_supplier FOREIGN KEY (supplier_id) REFERENCES public.suppliers(supplier_id);
 
 
 --
--- TOC entry 4028 (class 2606 OID 16967)
+-- TOC entry 4032 (class 2606 OID 16967)
 -- Name: production_lines fk_production_lines_factory; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2405,7 +2442,7 @@ ALTER TABLE ONLY public.production_lines
 
 
 --
--- TOC entry 4029 (class 2606 OID 17940)
+-- TOC entry 4033 (class 2606 OID 17940)
 -- Name: products fk_products_category; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2414,7 +2451,7 @@ ALTER TABLE ONLY public.products
 
 
 --
--- TOC entry 4030 (class 2606 OID 17945)
+-- TOC entry 4034 (class 2606 OID 17945)
 -- Name: products fk_products_production_line; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2423,16 +2460,16 @@ ALTER TABLE ONLY public.products
 
 
 --
--- TOC entry 4041 (class 2606 OID 17950)
+-- TOC entry 4045 (class 2606 OID 17950)
 -- Name: purchase_order_items fk_purchase_order_items_material; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
 ALTER TABLE ONLY public.purchase_order_items
-    ADD CONSTRAINT fk_purchase_order_items_material FOREIGN KEY (material_id) REFERENCES public.materials(material_id);
+    ADD CONSTRAINT fk_purchase_order_items_material FOREIGN KEY (material_id) REFERENCES public.raw_materials(material_id);
 
 
 --
--- TOC entry 4042 (class 2606 OID 17955)
+-- TOC entry 4046 (class 2606 OID 17955)
 -- Name: purchase_order_items fk_purchase_order_items_order; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2441,7 +2478,7 @@ ALTER TABLE ONLY public.purchase_order_items
 
 
 --
--- TOC entry 4040 (class 2606 OID 17960)
+-- TOC entry 4044 (class 2606 OID 17960)
 -- Name: purchase_orders fk_purchase_orders_supplier; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2450,7 +2487,7 @@ ALTER TABLE ONLY public.purchase_orders
 
 
 --
--- TOC entry 4052 (class 2606 OID 17268)
+-- TOC entry 4056 (class 2606 OID 17268)
 -- Name: quality_inspections fk_quality_inspections_factory; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2459,7 +2496,7 @@ ALTER TABLE ONLY public.quality_inspections
 
 
 --
--- TOC entry 4053 (class 2606 OID 17965)
+-- TOC entry 4057 (class 2606 OID 17965)
 -- Name: quality_inspections fk_quality_inspections_inspector; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2468,7 +2505,7 @@ ALTER TABLE ONLY public.quality_inspections
 
 
 --
--- TOC entry 4054 (class 2606 OID 17970)
+-- TOC entry 4058 (class 2606 OID 17970)
 -- Name: quality_inspections fk_quality_inspections_product; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2477,7 +2514,7 @@ ALTER TABLE ONLY public.quality_inspections
 
 
 --
--- TOC entry 4055 (class 2606 OID 17975)
+-- TOC entry 4059 (class 2606 OID 17975)
 -- Name: quality_inspections fk_quality_inspections_production_line; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2486,7 +2523,7 @@ ALTER TABLE ONLY public.quality_inspections
 
 
 --
--- TOC entry 4056 (class 2606 OID 17980)
+-- TOC entry 4060 (class 2606 OID 17980)
 -- Name: returns fk_returns_customer; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2495,7 +2532,7 @@ ALTER TABLE ONLY public.returns
 
 
 --
--- TOC entry 4057 (class 2606 OID 17985)
+-- TOC entry 4061 (class 2606 OID 17985)
 -- Name: returns fk_returns_employee; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2504,7 +2541,7 @@ ALTER TABLE ONLY public.returns
 
 
 --
--- TOC entry 4058 (class 2606 OID 17990)
+-- TOC entry 4062 (class 2606 OID 17990)
 -- Name: returns fk_returns_product; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2513,7 +2550,7 @@ ALTER TABLE ONLY public.returns
 
 
 --
--- TOC entry 4059 (class 2606 OID 17995)
+-- TOC entry 4063 (class 2606 OID 17995)
 -- Name: returns fk_returns_sales_order; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2522,7 +2559,7 @@ ALTER TABLE ONLY public.returns
 
 
 --
--- TOC entry 4060 (class 2606 OID 17322)
+-- TOC entry 4064 (class 2606 OID 17322)
 -- Name: returns fk_returns_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2531,7 +2568,7 @@ ALTER TABLE ONLY public.returns
 
 
 --
--- TOC entry 4045 (class 2606 OID 18000)
+-- TOC entry 4049 (class 2606 OID 18000)
 -- Name: sales_order_items fk_sales_order_items_order; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2540,7 +2577,7 @@ ALTER TABLE ONLY public.sales_order_items
 
 
 --
--- TOC entry 4046 (class 2606 OID 18005)
+-- TOC entry 4050 (class 2606 OID 18005)
 -- Name: sales_order_items fk_sales_order_items_product; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2549,7 +2586,7 @@ ALTER TABLE ONLY public.sales_order_items
 
 
 --
--- TOC entry 4043 (class 2606 OID 18010)
+-- TOC entry 4047 (class 2606 OID 18010)
 -- Name: sales_orders fk_sales_orders_customer; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2558,7 +2595,7 @@ ALTER TABLE ONLY public.sales_orders
 
 
 --
--- TOC entry 4044 (class 2606 OID 17170)
+-- TOC entry 4048 (class 2606 OID 17170)
 -- Name: sales_orders fk_sales_orders_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2567,7 +2604,7 @@ ALTER TABLE ONLY public.sales_orders
 
 
 --
--- TOC entry 4047 (class 2606 OID 18015)
+-- TOC entry 4051 (class 2606 OID 18015)
 -- Name: shipments fk_shipments_sales_order; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2576,7 +2613,7 @@ ALTER TABLE ONLY public.shipments
 
 
 --
--- TOC entry 4048 (class 2606 OID 17214)
+-- TOC entry 4052 (class 2606 OID 17214)
 -- Name: shipments fk_shipments_warehouse; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2585,7 +2622,7 @@ ALTER TABLE ONLY public.shipments
 
 
 --
--- TOC entry 4021 (class 2606 OID 17890)
+-- TOC entry 4025 (class 2606 OID 17890)
 -- Name: warehouses fk_warehouses_manager; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2594,7 +2631,7 @@ ALTER TABLE ONLY public.warehouses
 
 
 --
--- TOC entry 4049 (class 2606 OID 17234)
+-- TOC entry 4053 (class 2606 OID 17234)
 -- Name: work_orders fk_work_orders_factory; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2603,7 +2640,7 @@ ALTER TABLE ONLY public.work_orders
 
 
 --
--- TOC entry 4050 (class 2606 OID 18020)
+-- TOC entry 4054 (class 2606 OID 18020)
 -- Name: work_orders fk_work_orders_product; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2612,7 +2649,7 @@ ALTER TABLE ONLY public.work_orders
 
 
 --
--- TOC entry 4051 (class 2606 OID 18025)
+-- TOC entry 4055 (class 2606 OID 18025)
 -- Name: work_orders fk_work_orders_production_line; Type: FK CONSTRAINT; Schema: public; Owner: lauradev
 --
 
@@ -2620,11 +2657,11 @@ ALTER TABLE ONLY public.work_orders
     ADD CONSTRAINT fk_work_orders_production_line FOREIGN KEY (production_line_id) REFERENCES public.production_lines(production_line_id);
 
 
--- Completed on 2026-07-10 11:13:29 MST
+-- Completed on 2026-07-21 14:02:30 MST
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict W8nV3JJoAlyph0zEt5QHTxQT1fKaes8jmjQaBTHpkJcX2chNBPs1egs4REA6Us3
+\unrestrict Mbo8ivCXIVULvlAYhrVMoVqwogVm0O9RXyHg0n2nOfGEHrj7ViCWPpzUOyghp3N
 

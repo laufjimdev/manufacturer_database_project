@@ -1,7 +1,23 @@
-.env
-.venv/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
+
+# Virtual environments
+.venv/
+venv/
+
+# Airflow runtime files
+airflow/logs/
+airflow/airflow.db
+airflow/*.cfg
+airflow/simple_auth_manager_passwords.json
+
+# Airflow generated files
+airflow/dags/__pycache__/
+
+# Environment files
+.env
+
+# OS files
 .DS_Store
-.db

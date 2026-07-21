@@ -17,8 +17,8 @@ TRUNCATE TABLE
     purchase_orders,
     work_orders,
     quality_inspections,
-    inventory,
-    materials_inventory,
+    products_inventory,
+    raw_materials_inventory,
     maintenance_logs,
     maintenance_plans,
     machine_downtime,
@@ -26,10 +26,11 @@ TRUNCATE TABLE
     -- Manufacturing structure
     machines,
     products,
+    product_materials,
     production_lines,
 
     -- Master data
-    materials,
+    raw_materials,
     product_categories,
     suppliers,
     customers,
