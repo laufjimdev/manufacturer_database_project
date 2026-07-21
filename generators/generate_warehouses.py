@@ -3,22 +3,22 @@ from database.db_connection import get_connection
 warehouses = [
 
     ("W1",
-     "National Central Hub",
+     "Northeast Distribution",
      "Chicago",
      "Illinois",
-     120000),
+     70000),
 
     ("W2",
      "South Central Distribution",
-     "Columbus",
-     "Ohio",
+     "Dallas",
+     "Texas",
      95000),
 
     ("W3",
-     "Midwest / Northeast buffer",
-     "Buckeye",
-     "Arizona",
-     80000),
+     "National Central Hub",
+     "Columbus",
+     "Ohio",
+     120000),
 
     ("W4",
      "Inland Empire",
