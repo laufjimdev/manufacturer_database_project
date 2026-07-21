@@ -1,6 +1,6 @@
 from database.db_connection import get_connection
 
-def seedFactories():
+def seed_factories():
 
     factories = [
 

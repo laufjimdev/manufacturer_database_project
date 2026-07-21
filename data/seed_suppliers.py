@@ -65,7 +65,7 @@ def generate_supplier():
 
     return supplier
 
-def seedSuppliers():
+def seed_suppliers():
 
     Faker.seed(0)
 
