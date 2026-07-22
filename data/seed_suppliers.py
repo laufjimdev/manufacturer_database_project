@@ -62,8 +62,26 @@ def generate_supplier():
             LEAD_TIME_RATING[lead_time]
         )
     }
+    
 
     return supplier
+
+def get_supplier_ids():
+    """
+    Fetches all supplier_ids currently in the database.
+    Used by other seed modules (e.g. seed_materials) that need
+    a valid supplier_id to satisfy a foreign key constraint.
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT supplier_id FROM suppliers;")
+    supplier_ids = [row[0] for row in cursor.fetchall()]
+
+    cursor.close()
+    connection.close()
+    return supplier_ids
+
 
 def seed_suppliers():
 

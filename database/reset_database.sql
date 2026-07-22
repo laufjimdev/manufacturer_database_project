@@ -26,7 +26,7 @@ TRUNCATE TABLE
     -- Manufacturing structure
     machines,
     products,
-    product_materials,
+    product_bom,
     production_lines,
 
     -- Master data
