@@ -1,35 +1,39 @@
 from database.db_connection import get_connection
 
+
+FACTORIES = [
+    {
+        "factory_id": "F1",
+        "factory_name": "Dallas–Fort Worth Factory",
+        "city": "Dallas–Fort Worth",
+        "state": "Texas",
+        "capacity_units_per_day": 1080,
+    },
+    {
+        "factory_id": "F2",
+        "factory_name": "Atlanta Metro Factory",
+        "city": "Atlanta",
+        "state": "Georgia",
+        "capacity_units_per_day": 660,
+    },
+    {
+        "factory_id": "F3",
+        "factory_name": "Phoenix–Buckeye Factory",
+        "city": "Buckeye",
+        "state": "Arizona",
+        "capacity_units_per_day": 630,
+    },
+]
+
+
+FACTORY_IDS = [factory["factory_id"] for factory in FACTORIES]
+
 def seed_factories():
 
-    factories = [
-
-        ("F1",
-        "Dallas–Fort Worth Factory",
-        "Dallas–Fort Worth",
-        "Texas",
-        1200),
-
-        ("F2",
-        "Atlanta Metro Factory",
-        "Atlanta",
-        "Georgia",
-        1000),
-
-        ("F3",
-        "Phoenix–Buckeye Factory",
-        "Buckeye",
-        "Arizona",
-        900)
-
-    ]
-
     connection = get_connection()
-
     cursor = connection.cursor()
 
     insert_query = """
-
     INSERT INTO factories
     (
         factory_id,
@@ -39,7 +43,6 @@ def seed_factories():
         capacity_units_per_day,
         manager_employee_id
     )
-
     VALUES
     (
         %s,
@@ -49,20 +52,22 @@ def seed_factories():
         %s,
         NULL
     )
-
     ON CONFLICT (factory_id)
     DO NOTHING;
-
     """
 
-    for factory in factories:
-
-        cursor.execute(insert_query, factory)
+    for factory in FACTORIES:
+        cursor.execute(insert_query, (
+            factory["factory_id"],
+            factory["factory_name"],
+            factory["city"],
+            factory["state"],
+            factory["capacity_units_per_day"],
+        ))
 
     connection.commit()
-
     cursor.close()
-
     connection.close()
 
     print("Factories inserted successfully.")
+

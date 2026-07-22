@@ -130,6 +130,6 @@ def seed_suppliers():
     connection.close()
        
 
-    print("Suppliers inserted successfully.")
+    print(f"{len(suppliers)} Suppliers inserted successfully.")
         
 
