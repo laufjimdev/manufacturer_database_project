@@ -14,6 +14,7 @@ from data.seed_suppliers import seed_suppliers
 from data.seed_departments import seed_departments
 from data.seed_employees import seed_employees
 from data.seed_raw_materials import seed_raw_materials
+from data.seed_raw_material_suppliers import seed_raw_material_suppliers
 
 default_args = {
     'owner': 'Laura Jimenez',
@@ -66,9 +67,18 @@ seed_raw_materials_task = PythonOperator(
     python_callable=seed_raw_materials,
     dag=dag,
 )
+seed_raw_material_suppliers_task = PythonOperator(
+    task_id='seed_raw_material_suppliers',
+    python_callable=seed_raw_material_suppliers,
+    dag=dag,
+)
 
 seed_suppliers_task >> [
     seed_factories_task,
     seed_warehouses_task,
     seed_raw_materials_task
-] >> seed_departments_task >> seed_employees_task
+]
+
+[seed_factories_task, seed_warehouses_task] >> seed_departments_task >> seed_employees_task
+
+[seed_raw_materials_task, seed_factories_task]  >> seed_raw_material_suppliers_task

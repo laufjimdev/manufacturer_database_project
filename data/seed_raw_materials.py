@@ -21,7 +21,7 @@ def seed_raw_materials():
         %s,
         %s,
         %s,
-        %s,
+        %s
     );
     """
 
@@ -38,3 +38,20 @@ def seed_raw_materials():
     connection.close()
 
     print(f"{len(MATERIALS)} materials inserted successfully.")
+
+def get_material_ids():
+    """
+    Fetches material_id + material_name pairs from the database.
+    Used by seed_raw_material_suppliers to link materials to suppliers
+    and to look up each material's base unit_cost from MATERIALS config.
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT material_id, material_name FROM raw_materials;")
+    materials = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return materials

@@ -66,21 +66,22 @@ def generate_supplier():
 
     return supplier
 
-def get_supplier_ids():
+def get_supplier_pool():
     """
-    Fetches all supplier_ids currently in the database.
-    Used by other seed modules (e.g. seed_materials) that need
-    a valid supplier_id to satisfy a foreign key constraint.
+    Fetches supplier_id, rating, and lead_time_days for all suppliers.
+    Used by seed_raw_material_suppliers to select preferred (high-rating)
+    and backup (lower-rating) suppliers per material.
     """
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT supplier_id FROM suppliers;")
-    supplier_ids = [row[0] for row in cursor.fetchall()]
+    cursor.execute("SELECT supplier_id, rating, lead_time_days FROM suppliers;")
+    suppliers = cursor.fetchall()
 
     cursor.close()
     connection.close()
-    return supplier_ids
+
+    return suppliers
 
 
 def seed_suppliers():

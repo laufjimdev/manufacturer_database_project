@@ -31,6 +31,7 @@ TRUNCATE TABLE
 
     -- Master data
     raw_materials,
+	raw_material_suppliers,
     product_categories,
     suppliers,
     customers,
