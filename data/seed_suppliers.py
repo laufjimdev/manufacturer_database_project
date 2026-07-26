@@ -36,17 +36,65 @@ def create_contact_info(company_name):
     return contact_info
 
 
-def generate_supplier():
+def build_supplier_combos(total):
+    """
+    Build a list of (location, lead_time, rating) combos so that every
+    location gets an equal number of suppliers, and within each location
+    every rating gets an equal number of suppliers.
+
+    Returns a shuffled list of length `total` (or the largest multiple
+    of the combo count that is <= total, if total doesn't divide evenly).
+    """
+    # All (lead_time, rating) pairs, e.g. (2, 9), (2, 9.5), (2, 10), (3, 8.5)...
+    lead_time_rating_pairs = [
+        (lead_time, rating)
+        for lead_time, ratings in LEAD_TIME_RATING.items()
+        for rating in ratings
+    ]
+
+    # Cross with locations -> one combo per (location, lead_time, rating)
+    base_combos = [
+        (location, lead_time, rating)
+        for location in LOCATIONS
+        for lead_time, rating in lead_time_rating_pairs
+    ]
+
+    combo_count = len(base_combos)  # 3 locations * 12 (lead_time, rating) pairs = 36
+    repeats = total // combo_count
+
+    if repeats == 0:
+        raise ValueError(
+            f"total ({total}) must be >= number of combos ({combo_count}) "
+            "to keep an equal split across locations and ratings."
+        )
+
+    combos = base_combos * repeats
+    remainder = total - len(combos)
+
+    if remainder:
+        # Distribute leftover as evenly as possible, still balanced per
+        # location (take equal slices across locations for the remainder).
+        per_location_remainder = remainder // len(LOCATIONS)
+        leftover_by_location = remainder - per_location_remainder * len(LOCATIONS)
+
+        for i, location in enumerate(LOCATIONS):
+            location_pairs = lead_time_rating_pairs.copy()
+            random.shuffle(location_pairs)
+            count = per_location_remainder + (1 if i < leftover_by_location else 0)
+            for lead_time, rating in location_pairs[:count]:
+                combos.append((location, lead_time, rating))
+
+    random.shuffle(combos)
+    return combos
+
+
+def generate_supplier(location, lead_time, rating):
 
     company = fake.company()
 
     contact_info = create_contact_info(company)
 
-    city, state, prefix = random.choice(LOCATIONS)
-
-    lead_time = random.choice(
-        list(LEAD_TIME_RATING.keys())
-    )
+    city, state, prefix = location
 
     supplier = {
         "name": company,
@@ -58,13 +106,11 @@ def generate_supplier():
         "state": state,
         "zipcode": fake.numerify(prefix + "###"),
         "lead_time_days": lead_time,
-        "rating": random.choice(
-            LEAD_TIME_RATING[lead_time]
-        )
+        "rating": rating
     }
-    
 
     return supplier
+
 
 def get_supplier_pool():
     """
@@ -87,11 +133,16 @@ def get_supplier_pool():
 def seed_suppliers():
 
     Faker.seed(0)
+    random.seed(0)
 
-    suppliers = []
+    total_suppliers = 108
 
-    for _ in range(100):
-        suppliers.append(generate_supplier())
+    combos = build_supplier_combos(total_suppliers)
+
+    suppliers = [
+        generate_supplier(location, lead_time, rating)
+        for location, lead_time, rating in combos
+    ]
 
     connection = get_connection()
 
@@ -147,8 +198,5 @@ def seed_suppliers():
     cursor.close()
 
     connection.close()
-       
 
     print(f"{len(suppliers)} Suppliers inserted successfully.")
-        
-

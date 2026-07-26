@@ -61,7 +61,7 @@ def seed_raw_material_suppliers():
         %s,
         %s
     )
-    ON CONFLICT (material_id, supplier_id)
+    ON CONFLICT (material_id, supplier_id, factory_id)
     DO NOTHING;
     """
 
@@ -70,18 +70,10 @@ def seed_raw_material_suppliers():
     for material_id, material_name in materials:
         base_cost = BASE_COST_BY_NAME[material_name]
 
-        used_supplier_ids = set()
-
-        available_high = high_rating_suppliers.copy()
-        available_low = low_rating_suppliers.copy()
-        random.shuffle(available_high)
-        random.shuffle(available_low)
-
         for factory_id in FACTORY_IDS:
 
             # Preferred supplier — high rating
-            preferred_supplier_id, preferred_rating, preferred_lead_time = available_high.pop()
-            used_supplier_ids.add(preferred_supplier_id)
+            preferred_supplier_id, preferred_rating, preferred_lead_time = random.choice(high_rating_suppliers)
             preferred_price = round(base_cost * _get_multiplier(preferred_rating), 2)
 
             rows.append((
@@ -94,8 +86,7 @@ def seed_raw_material_suppliers():
             ))
 
             # Backup supplier — lower rating
-            backup_supplier_id, backup_rating, backup_lead_time = available_low.pop()
-            used_supplier_ids.add(backup_supplier_id)
+            backup_supplier_id, backup_rating, backup_lead_time = random.choice(low_rating_suppliers)
             backup_price = round(base_cost * _get_multiplier(backup_rating), 2)
 
             rows.append((
