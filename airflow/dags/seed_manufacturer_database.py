@@ -8,6 +8,7 @@ from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime, timedelta
 
+from data.truncate_database import truncate_database
 from data.seed_factories import seed_factories
 from data.seed_warehouses import seed_warehouses
 from data.seed_suppliers import seed_suppliers
@@ -17,6 +18,7 @@ from data.seed_raw_materials import seed_raw_materials
 from data.seed_raw_material_suppliers import seed_raw_material_suppliers
 from data.seed_product_categories import seed_product_categories
 from data.seed_production_lines import seed_production_lines
+from data.seed_products import seed_products
 
 default_args = {
     'owner': 'Laura Jimenez',
@@ -32,6 +34,13 @@ dag = DAG(
     description='',
     schedule=None,
     catchup=False,
+)
+#Tasks
+
+truncate_database_task = PythonOperator(
+    task_id='truncate_database',
+    python_callable=truncate_database,
+    dag=dag,
 )
 
 seed_factories_task = PythonOperator(
@@ -84,8 +93,15 @@ seed_production_lines_task = PythonOperator(
     python_callable=seed_production_lines,
     dag=dag,
 )
+seed_products_task = PythonOperator(
+    task_id='seed_products',
+    python_callable=seed_products,
+    dag=dag,
+)
 
 #Pipeline Definition
+
+truncate_database_task >> [seed_suppliers_task, seed_product_categories_task]
 
 seed_suppliers_task >> [
     seed_factories_task,
@@ -97,6 +113,4 @@ seed_suppliers_task >> [
 
 [seed_raw_materials_task, seed_factories_task]  >> seed_raw_material_suppliers_task
 
-seed_product_categories_task
-
-seed_factories_task >> seed_production_lines_task
+seed_factories_task >> seed_production_lines_task >> seed_products_task

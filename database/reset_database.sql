@@ -44,6 +44,6 @@ TRUNCATE TABLE
     factories,
     warehouses
 
-RESTART IDENTITY;
+RESTART IDENTITY CASCADE;
 
 COMMIT;

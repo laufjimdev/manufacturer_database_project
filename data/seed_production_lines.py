@@ -53,5 +53,20 @@ def seed_production_lines():
 
     print(f"{len(PRODUCTION_LINES)} production lines inserted")
 
+def get_production_lines_ids():
+    '''
+        Fetches the production_line_id, factory_id and line_type from the production_lines table
+    '''
+    connection= get_connection()
+    cursor= connection.cursor()
+
+    cursor.execute('SELECT production_line_id, factory_id, line_type FROM production_lines;')
+    production_lines_ids= cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return production_lines_ids
+
 if __name__ == "__main__":
     seed_production_lines()

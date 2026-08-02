@@ -36,5 +36,18 @@ def seed_product_categories():
 
     print(f"{len(CATEGORIES)} categories inserted successfully.")
 
+def get_category_ids():
+    connection= get_connection()
+    cursor= connection.cursor()
+
+    cursor.execute("SELECT category_id, category_name FROM product_categories;")
+    category_ids = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return category_ids
+
+
 if __name__ == "__main__":
     seed_product_categories()
