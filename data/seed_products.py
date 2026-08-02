@@ -44,12 +44,12 @@ def seed_products():
 
     connection.commit()
     cursor.execute('SELECT COUNT(*) FROM products;')
-    rows = cursor.fetchall()
+    rows = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
 
-    print(f"{len(rows)} products inserted successfully")
+    print(f"{rows} products inserted successfully")
 
 if __name__ == "__main__":
     seed_products()

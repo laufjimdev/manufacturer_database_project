@@ -35,12 +35,12 @@ def seed_raw_materials():
 
     connection.commit()
     cursor.execute('SELECT COUNT(*) FROM raw_materials;')
-    rows = cursor.fetchall()
+    rows = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
 
-    print(f"{len(rows)} materials inserted successfully.")
+    print(f"{rows} materials inserted successfully.")
 
 def get_material_ids():
     """

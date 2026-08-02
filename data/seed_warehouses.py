@@ -81,9 +81,9 @@ def seed_warehouses():
 
     connection.commit()
     cursor.execute('SELECT COUNT(*) FROM warehouses;')
-    rows = cursor.fetchall()
+    rows = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
 
-    print(f"{len(rows)}Warehouses inserted successfully.")
+    print(f"{rows} warehouses inserted successfully.")

@@ -32,12 +32,12 @@ def seed_product_categories():
 
     connection.commit()
     cursor.execute('SELECT COUNT(*) FROM product_categories;')
-    rows = cursor.fetchall()
+    rows = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
 
-    print(f"{len(rows)} categories inserted successfully.")
+    print(f"{rows} categories inserted successfully.")
 
 def get_category_ids():
     connection= get_connection()

@@ -102,9 +102,9 @@ def seed_raw_material_suppliers():
 
     connection.commit()
     cursor.execute('SELECT COUNT(*) FROM raw_material_suppliers;')
-    material_rows = cursor.fetchall()
+    material_rows = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
 
-    print(f"{len(material_rows)} raw_material_suppliers rows inserted successfully.")
+    print(f"{material_rows} raw material suppliers rows inserted successfully.")

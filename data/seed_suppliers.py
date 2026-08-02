@@ -195,9 +195,9 @@ def seed_suppliers():
 
     connection.commit()
     cursor.execute('SELECT COUNT(*) FROM suppliers;')
-    rows = cursor.fetchall()
+    rows = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
 
-    print(f"{len(rows)} Suppliers inserted successfully.")
+    print(f"{rows} Suppliers inserted successfully.")
