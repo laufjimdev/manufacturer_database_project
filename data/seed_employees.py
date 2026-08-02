@@ -106,7 +106,10 @@ def seed_employees():
     cursor.executemany(insert_query, all_employees)
 
     connection.commit()
+    cursor.execute('SELECT COUNT(*) FROM employees;')
+    rows = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
-    print(f"{len(all_employees)} employees inserted successfully.")
+    print(f"{len(rows)} employees inserted successfully.")

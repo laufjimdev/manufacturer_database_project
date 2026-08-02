@@ -31,10 +31,13 @@ def seed_product_categories():
         ))
 
     connection.commit()
+    cursor.execute('SELECT COUNT(*) FROM product_categories;')
+    rows = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
-    print(f"{len(CATEGORIES)} categories inserted successfully.")
+    print(f"{len(rows)} categories inserted successfully.")
 
 def get_category_ids():
     connection= get_connection()

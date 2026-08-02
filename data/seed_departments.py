@@ -92,8 +92,11 @@ def seed_departments():
     cursor.executemany(insert_query, all_rows)
 
     connection.commit()
+    cursor.execute('SELECT COUNT(*) FROM departments;')
+    rows = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
-    print(f"{len(all_rows)} departments inserted successfully.")
+    print(f"{len(rows)} departments inserted successfully.")
 

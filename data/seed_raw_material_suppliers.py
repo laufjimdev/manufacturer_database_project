@@ -101,7 +101,10 @@ def seed_raw_material_suppliers():
     cursor.executemany(insert_query, rows)
 
     connection.commit()
+    cursor.execute('SELECT COUNT(*) FROM raw_material_suppliers;')
+    material_rows = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
-    print(f"{len(rows)} raw_material_suppliers rows inserted successfully.")
+    print(f"{len(material_rows)} raw_material_suppliers rows inserted successfully.")

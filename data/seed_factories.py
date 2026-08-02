@@ -66,8 +66,11 @@ def seed_factories():
         ))
 
     connection.commit()
+    cursor.execute('SELECT COUNT(*) FROM factories;')
+    rows = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
-    print("Factories inserted successfully.")
+    print(f"{len(rows)} factories inserted successfully.")
 

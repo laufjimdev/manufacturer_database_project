@@ -48,10 +48,13 @@ def seed_production_lines():
         ))
 
     connection.commit()
+    cursor.execute('SELECT COUNT(*) FROM production_lines;')
+    rows = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
-    print(f"{len(PRODUCTION_LINES)} production lines inserted")
+    print(f"{len(rows)} production lines inserted")
 
 def get_production_lines_ids():
     '''
