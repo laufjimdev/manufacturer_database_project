@@ -1,5 +1,5 @@
 from database.db_connection import get_connection
-from data.products_config import PRODUCTS
+from data.data_configs.products_config import PRODUCTS
 from data.seed_product_categories import get_category_ids
 
 def seed_products():

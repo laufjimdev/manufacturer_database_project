@@ -19,6 +19,8 @@ from data.seed_raw_material_suppliers import seed_raw_material_suppliers
 from data.seed_product_categories import seed_product_categories
 from data.seed_production_lines import seed_production_lines
 from data.seed_products import seed_products
+from data.seed_machines import seed_machines
+from data.seed_product_bom import seed_product_bom
 
 default_args = {
     'owner': 'Laura Jimenez',
@@ -98,6 +100,16 @@ seed_products_task = PythonOperator(
     python_callable=seed_products,
     dag=dag,
 )
+seed_machines_task = PythonOperator(
+    task_id='seed_machines',
+    python_callable=seed_machines,
+    dag=dag,
+)
+seed_product_bom_task = PythonOperator(
+    task_id='seed_product_bom',
+    python_callable=seed_product_bom,
+    dag=dag,
+)
 
 #Pipeline Definition
 
@@ -113,4 +125,6 @@ seed_suppliers_task >> [
 
 [seed_raw_materials_task, seed_factories_task]  >> seed_raw_material_suppliers_task
 
-seed_factories_task >> seed_production_lines_task >> seed_products_task
+seed_factories_task >> seed_production_lines_task >> [seed_products_task, seed_machines_task]
+
+[seed_products_task, seed_raw_materials_task] >> seed_product_bom_task

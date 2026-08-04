@@ -1,5 +1,5 @@
 from database.db_connection import get_connection
-from data.raw_materials_config import MATERIALS
+from data.data_configs.raw_materials_config import MATERIALS
 from data.seed_raw_materials import get_material_ids
 from data.seed_suppliers import get_supplier_pool
 from data.seed_factories import FACTORY_IDS
