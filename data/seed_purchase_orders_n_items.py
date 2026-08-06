@@ -127,10 +127,12 @@ def seed_purchase_order_items(purchase_orders_data, connection):
             material_id,
             quantity,
             unit_cost,
-            line_total
+            line_total,
+            quantity_received
         )
         VALUES
         (
+            %s,
             %s,
             %s,
             %s,
@@ -151,6 +153,7 @@ def seed_purchase_order_items(purchase_orders_data, connection):
                 quantity,
                 unit_cost,
                 line_total,
+                quantity
             ))
 
     cursor.executemany(insert_query, rows)
