@@ -1,5 +1,5 @@
 from database.db_connection import get_connection
-from data.seed_product_bom import calculate_required_materials
+from data.data_configs.product_bom_config import calculate_required_materials
 from data.seed_raw_material_suppliers import get_supplier_lookup, get_random_supplier
 from datetime import date, timedelta
 from faker import Faker
