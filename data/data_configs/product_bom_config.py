@@ -101,3 +101,45 @@ PRODUCT_MATERIALS = {
         (23, 4),
     ],
 }
+
+# Ratio of each product's quantity relative to product_id 1's quantity
+PRODUCT_RATIOS = {
+    1: 1.0,
+    2: 1.0,
+    3: 1.0,
+    4: 0.8,
+    5: 0.8,
+    6: 0.3,
+    7: 0.5,
+    8: 0.3,
+    9: 0.5,
+    10: 0.5,
+    11: 0.15,
+    12: 0.08,
+}
+
+
+def calculate_required_materials(factory_base_quantities: dict) -> dict:
+    """
+    factory_base_quantities: {"F1": 1000, "F2": 800, "F3": 500}
+    Base quantity = quantity of product_id 1 for that factory.
+    All other products scale off it via PRODUCT_RATIOS.
+
+    Returns: {"F1": [(material_id, total_qty), ...], ...}
+    """
+    required_materials = {}
+
+    for factory_id, base_qty in factory_base_quantities.items():
+        material_totals = {}
+
+        for product_id, ratio in PRODUCT_RATIOS.items():
+            product_qty = round(base_qty * ratio)
+
+            for material_id, qty_per_unit in PRODUCT_MATERIALS[product_id]:
+                material_totals[material_id] = (
+                    material_totals.get(material_id, 0) + qty_per_unit * product_qty
+                )
+
+        required_materials[factory_id] = list(material_totals.items())
+
+    return required_materials

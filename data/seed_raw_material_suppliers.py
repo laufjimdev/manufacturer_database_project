@@ -108,3 +108,66 @@ def seed_raw_material_suppliers():
     connection.close()
 
     print(f"{material_rows} raw material suppliers rows inserted successfully.")
+
+
+def get_supplier_lookup():
+    """
+    Builds a lookup of all available suppliers per (material_id, factory_id),
+    pulled from raw_material_suppliers. Each entry includes both preferred
+    and backup suppliers so callers can randomly choose either.
+
+    Returns:
+        {
+            (material_id, factory_id): [
+                (supplier_id, unit_cost, lead_time_days, preferred_supplier),
+                ...
+            ]
+        }
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT material_id, factory_id, supplier_id, unit_cost, lead_time_days, preferred_supplier
+        FROM raw_material_suppliers;
+    """)
+    rows = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    lookup = {}
+    for material_id, factory_id, supplier_id, unit_cost, lead_time_days, preferred in rows:
+        key = (material_id, factory_id)
+        lookup.setdefault(key, []).append(
+            (supplier_id, unit_cost, lead_time_days, preferred)
+        )
+
+    return lookup
+
+
+def get_random_supplier(lookup, material_id, factory_id):
+    """
+    Randomly selects a supplier (preferred or not) for a given material_id/factory_id.
+
+    Returns:
+        (material_id, supplier_id, factory_id, unit_cost, lead_time_days)
+    """
+    key = (material_id, factory_id)
+    options = lookup.get(key)
+
+    if not options:
+        raise ValueError(f"No suppliers found for material_id={material_id}, factory_id={factory_id}")
+
+    supplier_id, unit_cost, lead_time_days, _preferred = random.choice(options)
+
+    return (
+        material_id,
+        supplier_id,
+        factory_id,
+        unit_cost,
+        lead_time_days,
+    )
+
+if __name__ == "main":
+    seed_raw_material_suppliers()

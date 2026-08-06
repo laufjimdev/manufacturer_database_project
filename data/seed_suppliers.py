@@ -115,8 +115,6 @@ def generate_supplier(location, lead_time, rating):
 def get_supplier_pool():
     """
     Fetches supplier_id, rating, and lead_time_days for all suppliers.
-    Used by seed_raw_material_suppliers to select preferred (high-rating)
-    and backup (lower-rating) suppliers per material.
     """
     connection = get_connection()
     cursor = connection.cursor()
