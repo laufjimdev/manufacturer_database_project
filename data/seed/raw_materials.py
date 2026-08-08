@@ -1,6 +1,6 @@
 from database.db_connection import get_connection
 from data.seed.data_configs.raw_materials_config import MATERIALS
-import random
+
 
 
 def seed_raw_materials():

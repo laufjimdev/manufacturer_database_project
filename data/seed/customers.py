@@ -1,6 +1,6 @@
 from database.db_connection import get_connection
 from faker import Faker
-from data.seed.seed_suppliers import create_contact_info
+from data.seed.suppliers import create_contact_info
 
 fake = Faker("en_US")
 
