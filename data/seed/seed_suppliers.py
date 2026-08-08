@@ -33,7 +33,7 @@ def create_contact_info(company_name):
     first_name = fake.first_name().lower()
     last_name = fake.last_name().lower()
     contact_info = [first_name.capitalize(), last_name.capitalize(), f"{first_name}.{last_name}@{domain}.com"]
-    return contact_info
+    return contact_info #returns [first_name, last_name, email]
 
 
 def build_supplier_combos(total):
