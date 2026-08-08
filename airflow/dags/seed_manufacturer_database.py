@@ -9,18 +9,18 @@ from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime, timedelta
 
 from data.truncate_database import truncate_database
-from data.seed_factories import seed_factories
-from data.seed_warehouses import seed_warehouses
-from data.seed_suppliers import seed_suppliers
-from data.seed_departments import seed_departments
-from data.seed_employees import seed_employees
-from data.seed_raw_materials import seed_raw_materials
-from data.seed_raw_material_suppliers import seed_raw_material_suppliers
-from data.seed_product_categories import seed_product_categories
-from data.seed_production_lines import seed_production_lines
-from data.seed_products import seed_products
-from data.seed_machines import seed_machines
-from data.seed_product_bom import seed_product_bom
+from data.seed.seed_factories import seed_factories
+from data.seed.seed_warehouses import seed_warehouses
+from data.seed.seed_suppliers import seed_suppliers
+from data.seed.seed_departments import seed_departments
+from data.seed.seed_employees import seed_employees
+from data.seed.seed_raw_materials import seed_raw_materials
+from data.seed.seed_raw_material_suppliers import seed_raw_material_suppliers
+from data.seed.seed_product_categories import seed_product_categories
+from data.seed.seed_production_lines import seed_production_lines
+from data.seed.seed_products import seed_products
+from data.seed.seed_machines import seed_machines
+from data.seed.seed_product_bom import seed_product_bom
 from data.seed_purchase_orders_n_items import seed_purchase_orders_n_items
 from data.seed_raw_materials_inventory import seed_raw_materials_inventory
 

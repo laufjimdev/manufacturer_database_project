@@ -1,5 +1,5 @@
 from database.db_connection import get_connection
-from data.data_configs.raw_materials_config import MATERIALS
+from data.seed.data_configs.raw_materials_config import MATERIALS
 import random
 
 

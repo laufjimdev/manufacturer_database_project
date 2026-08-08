@@ -1,6 +1,6 @@
 from database.db_connection import get_connection
-from data.data_configs.employees_config import FACTORY_STAFFING, WAREHOUSE_STAFFING
-from data.seed_departments import FACTORY_DEPARTMENTS, WAREHOUSE_DEPARTMENTS
+from data.seed.data_configs.employees_config import FACTORY_STAFFING, WAREHOUSE_STAFFING
+from data.seed.seed_departments import FACTORY_DEPARTMENTS, WAREHOUSE_DEPARTMENTS
 from datetime import date
 from faker import Faker
 import random

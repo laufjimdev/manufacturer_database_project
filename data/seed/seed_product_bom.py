@@ -1,5 +1,5 @@
 from database.db_connection import get_connection
-from data.data_configs.product_bom_config import PRODUCT_MATERIALS
+from data.seed.data_configs.product_bom_config import PRODUCT_MATERIALS
 
 def seed_product_bom():
     connection = get_connection()

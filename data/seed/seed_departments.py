@@ -1,6 +1,6 @@
 from database.db_connection import get_connection
-from data.seed_factories import FACTORY_IDS
-from data.seed_warehouses import WAREHOUSES_IDS
+from data.seed.seed_factories import FACTORY_IDS
+from data.seed.seed_warehouses import WAREHOUSES_IDS
 
 FACTORY_DEPARTMENTS = [
     'Production Assembly',

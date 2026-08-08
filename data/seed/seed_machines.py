@@ -1,5 +1,5 @@
 from database.db_connection import get_connection
-from data.data_configs.machines_config import MACHINES
+from data.seed.data_configs.machines_config import MACHINES
 from datetime import date
 from faker import Faker
 
