@@ -17,7 +17,6 @@ def seed_machines():
             machine_type,
             install_date,
             hourly_rate_usd,
-            maintenance_cycle_days,
             status
         )
         VALUES
@@ -27,19 +26,17 @@ def seed_machines():
             %s,
             %s,
             %s,
-            %s,
             'active'
         )
 '''
 
-    for production_line_id, machine_name, machine_type, hourly_rate_usd, maintenance_cycle_days in MACHINES:
+    for production_line_id, machine_name, machine_type, hourly_rate_usd in MACHINES:
         cursor.execute(insert_query, (
             production_line_id,
             machine_name,
             machine_type,
             fake.date_between(start_date=date(2025, 2, 1), end_date=date(2025, 7, 1)),
             hourly_rate_usd,
-            maintenance_cycle_days
         ))
 
     connection.commit()
