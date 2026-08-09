@@ -1,17 +1,23 @@
 from database.db_connection import get_connection
 from data.seed.data_configs.product_bom_config import calculate_required_materials
-from data.seed_raw_material_suppliers import get_supplier_lookup, get_random_supplier
+from data.seed.raw_material_suppliers import get_supplier_lookup, get_random_supplier
 from datetime import date, timedelta
 from faker import Faker
 
-fake = Faker()
-
+'''
+This module simulates purchase orders for each factory based on the quantity defined for the first product (product_id = 1), the rest of the products purchase orders are automatically calculated as ratio of this initial defined value.
+Use the Simulation Configs to define the params for the desired simulation.
+'''
+#Simulation Configs
 FACTORY_BASE_QUANTITIES = {
     "F1": 1000,
     "F2": 800,
     "F3": 500,
 }
+purchase_start_date = date(2026, 1, 1)
+purchase_end_date = date(2026, 1, 23)
 
+fake = Faker()
 
 def generate_purchase_order_data():
     """
@@ -47,7 +53,7 @@ def generate_purchase_order_data():
     purchase_orders_data = []
 
     for (factory_id, supplier_id), items in grouped.items():
-        order_date = fake.date_between(date(2026, 1, 1), date(2026, 1, 23))
+        order_date = fake.date_between(purchase_start_date, purchase_end_date)
         max_lead_time = max(item[3] for item in items)
         expected_date = order_date + timedelta(days=max_lead_time)
         total_cost = sum(quantity * unit_cost for _material_id, quantity, unit_cost, _lead in items)
@@ -67,7 +73,7 @@ def generate_purchase_order_data():
     return purchase_orders_data
 
 
-def seed_purchase_orders(purchase_orders_data, connection):
+def simulate_purchase_orders(purchase_orders_data, connection):
     """
     Inserts purchase_orders rows from already-generated data.
     """
@@ -114,7 +120,7 @@ def seed_purchase_orders(purchase_orders_data, connection):
     print(f"{po_rows} purchase orders inserted successfully.")
 
 
-def seed_purchase_order_items(purchase_orders_data, connection):
+def simulate_purchase_order_items(purchase_orders_data, connection):
     """
     Inserts purchase_order_items rows using the SAME already-generated
     """
@@ -165,13 +171,13 @@ def seed_purchase_order_items(purchase_orders_data, connection):
 
     print(f"{item_rows} purchase order items inserted successfully.")
 
-def seed_purchase_orders_n_items():
+def simulate_purchase_orders_n_items():
     connection = get_connection()
 
     try:
         purchase_orders_data = generate_purchase_order_data()
-        seed_purchase_orders(purchase_orders_data, connection)
-        seed_purchase_order_items(purchase_orders_data, connection)
+        simulate_purchase_orders(purchase_orders_data, connection)
+        simulate_purchase_order_items(purchase_orders_data, connection)
 
         connection.commit()
         print("Purchase orders and items committed successfully.")
@@ -185,4 +191,4 @@ def seed_purchase_orders_n_items():
         connection.close()
 
 if __name__ == "__main__":
-    seed_purchase_orders_n_items()
+    simulate_purchase_orders_n_items()
