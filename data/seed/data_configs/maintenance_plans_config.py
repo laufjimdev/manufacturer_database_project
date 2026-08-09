@@ -1,0 +1,15 @@
+MAINTENANCE_PLANS_BY_MACHINE_TYPE = {
+    "CNC Saw": ("preventive", 30, 4.00),
+    "Edge Banding": ("preventive", 30, 3.00),
+    "Hydraulic Press": ("preventive", 45, 5.00),
+    "Assembly": ("preventive", 60, 2.00),
+    "Powder Coating": ("preventive", 30, 4.00),
+    "Tube Bender": ("preventive", 45, 4.00),
+    "MIG Welder": ("preventive", 30, 3.00),
+    "Riveting": ("preventive", 45, 2.50),
+    "Laser Cutter": ("preventive", 21, 6.00),
+    "TIG Welder": ("preventive", 30, 3.50),
+    "Glass Processing": ("preventive", 30, 4.00),
+    "Glass Finishing": ("preventive", 30, 3.50),
+    "Quality": ("preventive", 30, 1.50),
+}

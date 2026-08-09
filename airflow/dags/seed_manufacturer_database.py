@@ -21,9 +21,9 @@ from data.seed.production_lines import seed_production_lines
 from data.seed.products import seed_products
 from data.seed.machines import seed_machines
 from data.seed.product_bom import seed_product_bom
-from data.seed_purchase_orders_n_items import seed_purchase_orders_n_items
+#from data.seed_purchase_orders_n_items import seed_purchase_orders_n_items
 from data.seed.customers import seed_customers
-
+from data.seed.maintenance_plans import seed_maintenance_plans
 
 
 default_args = {
@@ -114,14 +114,19 @@ seed_product_bom_task = PythonOperator(
     python_callable=seed_product_bom,
     dag=dag,
 )
-seed_purchase_orders_n_items_task = PythonOperator(
+'''seed_purchase_orders_n_items_task = PythonOperator(
     task_id='seed_purchase_orders_n_items',
     python_callable=seed_purchase_orders_n_items,
     dag=dag,
-)
+)'''
 seed_customers_task = PythonOperator(
     task_id='seed_customers',
     python_callable=seed_customers,
+    dag=dag,
+)
+seed_maintenance_plans_task = PythonOperator(
+    task_id='seed_maintenance_plans',
+    python_callable=seed_maintenance_plans,
     dag=dag,
 )
 #Pipeline Definition
@@ -136,8 +141,10 @@ seed_suppliers_task >> [
 
 [seed_factories_task, seed_warehouses_task] >> seed_departments_task >> seed_employees_task
 
-[seed_raw_materials_task, seed_factories_task]  >> seed_raw_material_suppliers_task >> seed_purchase_orders_n_items_task 
+[seed_raw_materials_task, seed_factories_task]  >> seed_raw_material_suppliers_task  
 
-seed_factories_task >> seed_production_lines_task >> [seed_products_task, seed_machines_task]
+seed_factories_task >> seed_production_lines_task >> [seed_products_task, seed_machines_task] 
+
+seed_machines_task >> seed_maintenance_plans_task
 
 [seed_products_task, seed_raw_materials_task] >> seed_product_bom_task
