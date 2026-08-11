@@ -6,20 +6,11 @@ from faker import Faker
 
 '''
 This module simulates purchase orders for each factory based on the quantity defined for the first product (product_id = 1), the rest of the products purchase orders are automatically calculated as ratio of this initial defined value.
-Use the Simulation Configs to define the params for the desired simulation.
 '''
-#Simulation Configs
-FACTORY_BASE_QUANTITIES = {
-    "F1": 1000,
-    "F2": 800,
-    "F3": 500,
-}
-purchase_start_date = date(2026, 1, 1)
-purchase_end_date = date(2026, 1, 23)
 
 fake = Faker()
 
-def generate_purchase_order_data():
+def generate_purchase_order_data(factory_quantities, purchase_start_date, purchase_end_date):
     """
     Returns:
         [
@@ -34,7 +25,7 @@ def generate_purchase_order_data():
             ...
         ]
     """
-    required_materials = calculate_required_materials(FACTORY_BASE_QUANTITIES)
+    required_materials = calculate_required_materials(factory_quantities)
     supplier_lookup = get_supplier_lookup()
 
     grouped = {}
@@ -118,6 +109,7 @@ def simulate_purchase_orders(purchase_orders_data, connection):
     cursor.close()
 
     print(f"{po_rows} purchase orders inserted successfully.")
+    return purchase_orders_data
 
 
 def simulate_purchase_order_items(purchase_orders_data, connection):
@@ -171,24 +163,23 @@ def simulate_purchase_order_items(purchase_orders_data, connection):
 
     print(f"{item_rows} purchase order items inserted successfully.")
 
-def simulate_purchase_orders_n_items():
-    connection = get_connection()
 
-    try:
-        purchase_orders_data = generate_purchase_order_data()
-        simulate_purchase_orders(purchase_orders_data, connection)
-        simulate_purchase_order_items(purchase_orders_data, connection)
-
-        connection.commit()
-        print("Purchase orders and items committed successfully.")
-
-    except Exception as e:
-        connection.rollback()
-        print(f"Failed to seed purchase orders and items, rolled back: {e}")
-        raise
-
-    finally:
-        connection.close()
 
 if __name__ == "__main__":
-    simulate_purchase_orders_n_items()
+    from datetime import date
+
+    connection = get_connection()
+    try:
+        data = generate_purchase_order_data(
+            {"F1": 1000, "F2": 800, "F3": 500},
+            date(2026, 1, 1),
+            date(2026, 1, 23),
+        )
+        data = simulate_purchase_orders(data, connection)
+        simulate_purchase_order_items(data, connection)
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise Exception(f"Test run failed: {e}")
+    finally:
+        connection.close()

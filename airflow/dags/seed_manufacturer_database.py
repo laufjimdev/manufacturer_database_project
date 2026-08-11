@@ -21,7 +21,6 @@ from data.seed.production_lines import seed_production_lines
 from data.seed.products import seed_products
 from data.seed.machines import seed_machines
 from data.seed.product_bom import seed_product_bom
-#from data.seed_purchase_orders_n_items import seed_purchase_orders_n_items
 from data.seed.customers import seed_customers
 from data.seed.maintenance_plans import seed_maintenance_plans
 
@@ -114,11 +113,6 @@ seed_product_bom_task = PythonOperator(
     python_callable=seed_product_bom,
     dag=dag,
 )
-'''seed_purchase_orders_n_items_task = PythonOperator(
-    task_id='seed_purchase_orders_n_items',
-    python_callable=seed_purchase_orders_n_items,
-    dag=dag,
-)'''
 seed_customers_task = PythonOperator(
     task_id='seed_customers',
     python_callable=seed_customers,
