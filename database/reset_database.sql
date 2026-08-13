@@ -27,6 +27,7 @@ TRUNCATE TABLE
     machines,
     products,
     product_bom,
+    production_line_categories,
     production_lines,
 
     -- Master data

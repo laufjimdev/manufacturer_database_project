@@ -9,10 +9,10 @@ CREATE TABLE IF NOT EXISTS public.customers
     contact_name character varying(100) COLLATE pg_catalog."default",
     email character varying(100) COLLATE pg_catalog."default" NOT NULL,
     phone character(30) COLLATE pg_catalog."default" NOT NULL,
-    billing_address text COLLATE pg_catalog."default" NOT NULL,
+    billing_address_st text COLLATE pg_catalog."default" NOT NULL,
     city character varying(80) COLLATE pg_catalog."default",
     state character varying(80) COLLATE pg_catalog."default",
-    country character(2) COLLATE pg_catalog."default" NOT NULL,
+    zipcode character(10) COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT customers_pkey PRIMARY KEY (customer_id),
     CONSTRAINT customers_email_key UNIQUE (email)
 );
@@ -89,7 +89,6 @@ CREATE TABLE IF NOT EXISTS public.machines
     install_date date,
     status character varying(20) COLLATE pg_catalog."default" NOT NULL DEFAULT 'active'::character varying,
     hourly_rate_usd numeric(10, 2),
-    maintenance_cycle_days integer,
     CONSTRAINT machines_pkey PRIMARY KEY (machine_id)
 );
 
@@ -112,7 +111,7 @@ CREATE TABLE IF NOT EXISTS public.maintenance_plans
     maintenance_type character varying(50) COLLATE pg_catalog."default" NOT NULL,
     frequency_days integer NOT NULL,
     estimated_duration_hours numeric(6, 2),
-    assigned_employee_id integer NOT NULL,
+    assigned_employee_id integer,
     CONSTRAINT maintenance_plans_pkey PRIMARY KEY (maintenance_plan_id)
 );
 
@@ -130,6 +129,13 @@ CREATE TABLE IF NOT EXISTS public.product_categories
     category_name character varying(100) COLLATE pg_catalog."default" NOT NULL,
     description text COLLATE pg_catalog."default",
     CONSTRAINT product_categories_pkey PRIMARY KEY (category_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.production_line_categories
+(
+    production_line_id integer NOT NULL,
+    category_id integer NOT NULL,
+    CONSTRAINT production_line_categories_pkey PRIMARY KEY (production_line_id, category_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.production_lines
@@ -458,6 +464,20 @@ ALTER TABLE IF EXISTS public.maintenance_plans
 ALTER TABLE IF EXISTS public.maintenance_plans
     ADD CONSTRAINT fk_maintenance_plans_machine FOREIGN KEY (machine_id)
     REFERENCES public.machines (machine_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.production_line_categories
+    ADD CONSTRAINT fk_plc_category FOREIGN KEY (category_id)
+    REFERENCES public.product_categories (category_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.production_line_categories
+    ADD CONSTRAINT fk_plc_line FOREIGN KEY (production_line_id)
+    REFERENCES public.production_lines (production_line_id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 

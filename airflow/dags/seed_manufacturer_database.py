@@ -23,6 +23,7 @@ from data.seed.machines import seed_machines
 from data.seed.product_bom import seed_product_bom
 from data.seed.customers import seed_customers
 from data.seed.maintenance_plans import seed_maintenance_plans
+from data.seed.production_line_categories import seed_production_line_categories
 
 
 default_args = {
@@ -123,6 +124,12 @@ seed_maintenance_plans_task = PythonOperator(
     python_callable=seed_maintenance_plans,
     dag=dag,
 )
+seed_production_line_categories_task = PythonOperator(
+    task_id='seed_production_line_categories',
+    python_callable=seed_production_line_categories,
+    dag=dag,
+)
+
 #Pipeline Definition
 
 truncate_database_task >> [seed_suppliers_task, seed_product_categories_task, seed_customers_task]
@@ -142,3 +149,5 @@ seed_factories_task >> seed_production_lines_task >> [seed_products_task, seed_m
 seed_machines_task >> seed_maintenance_plans_task
 
 [seed_products_task, seed_raw_materials_task] >> seed_product_bom_task
+
+[seed_product_categories_task, seed_production_lines_task] >> seed_production_line_categories_task
