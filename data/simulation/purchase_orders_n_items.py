@@ -91,7 +91,7 @@ def simulate_purchase_orders(purchase_orders_data, connection):
         )
         RETURNING purchase_order_id;
     '''
-
+    po_counter = 0
     for po in purchase_orders_data:
         cursor.execute(insert_query, (
             po["supplier_id"],
@@ -101,14 +101,12 @@ def simulate_purchase_orders(purchase_orders_data, connection):
             po["factory_id"],
         ))
         po["purchase_order_id"] = cursor.fetchone()[0]
+        po_counter += 1
 
-
-    cursor.execute('SELECT COUNT(*) FROM purchase_orders;')
-    po_rows = cursor.fetchone()[0]
 
     cursor.close()
 
-    print(f"{po_rows} purchase orders inserted successfully.")
+    print(f"{po_counter} purchase orders inserted successfully.")
     return purchase_orders_data
 
 
@@ -140,7 +138,7 @@ def simulate_purchase_order_items(purchase_orders_data, connection):
     '''
 
     rows = []
-
+    poi_counter = 0
     for po in purchase_orders_data:
         purchase_order_id = po["purchase_order_id"]
         for material_id, quantity, unit_cost in po["items"]:
@@ -153,15 +151,15 @@ def simulate_purchase_order_items(purchase_orders_data, connection):
                 line_total,
                 quantity
             ))
+        poi_counter += 1
 
     cursor.executemany(insert_query, rows)
 
-    cursor.execute('SELECT COUNT(*) FROM purchase_order_items;')
-    item_rows = cursor.fetchone()[0]
+    
 
     cursor.close()
 
-    print(f"{item_rows} purchase order items inserted successfully.")
+    print(f"{poi_counter} purchase order items inserted successfully.")
 
 
 

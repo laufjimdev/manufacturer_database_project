@@ -10,6 +10,7 @@ from datetime import date
 from database.db_connection import get_connection
 
 from data.simulation.purchase_orders_n_items import generate_purchase_order_data, simulate_purchase_orders, simulate_purchase_order_items
+from data.simulation.work_orders import simulate_work_orders
 
 
 
@@ -23,6 +24,9 @@ from data.simulation.purchase_orders_n_items import generate_purchase_order_data
         ),
         "purchase_start_date": Param("2026-01-01", type="string", format="date"),
         "purchase_end_date": Param("2026-01-23", type="string", format="date"),
+        # Work order simulation params
+        "factory_base_quantities_wo": Param({"F1": 800, "F2": 600, "F3": 300}, type = "object"),
+        "start_date_wo": Param("2026-02-01", type= "string", format= "date")
     },
 )
 def simulate_manufacturing_cycle():
@@ -52,12 +56,21 @@ def simulate_manufacturing_cycle():
         finally:
             connection.close()
 
+    @task
+    def run_work_order_simulation(**context):
+        params = context["params"]
+        factory_base_quantities_wo = params["factory_base_quantities_wo"]
+        start_date_wo = date.fromisoformat(params["start_date_wo"])
+
+        simulate_work_orders(factory_base_quantities_wo, start_date_wo)
     
 
 
-    po_task = run_purchase_order_simulation()
 
-    po_task
+    po_task = run_purchase_order_simulation()
+    wo_task = run_work_order_simulation()
+
+    po_task >> wo_task
 
 
 simulate_manufacturing_cycle()
