@@ -9,7 +9,7 @@ def get_wo_quantity(production_line_id, quantity):
         return quantity
     elif production_line_id == 1:
         return quantity * 0.52
-    else:
+    elif production_line_id == 2:
         return quantity * 0.48
     
 
@@ -25,13 +25,13 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
                         FROM production_line_categories plc
                         JOIN products p ON plc.category_id = p.category_id
                         JOIN production_lines pl ON plc.production_line_id = pl.production_line_id
-                        ORDER BY pl.factory_id, p.product_id;
+                        ORDER BY pl.factory_id, p.product_id, plc.production_line_id;
     ''')
         products_n_lines = cursor.fetchall()
         products_n_lines_dict = {}
 
         for factory_id, product_id, production_line_id in products_n_lines:
-            products_n_lines_dict[(factory_id, product_id)] = production_line_id
+            products_n_lines_dict.setdefault((factory_id, product_id), []).append(production_line_id)
 
         #Getting lines capacity per day
         cursor.execute('SELECT production_line_id, capacity_per_day FROM production_lines;')
@@ -72,23 +72,43 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
         for factory_id, quantity in factory_base_quantities_wo.items():
             for product_id, ratio in PRODUCT_RATIOS.items():
 
-                production_line_id = products_n_lines_dict[(factory_id, product_id)]
-                line_capacity = lines_capacity_dict[production_line_id]
-                wo_quantity = get_wo_quantity(production_line_id, quantity) * ratio
-                due_date = start_date_wo + timedelta(days=math.ceil(wo_quantity/line_capacity))
+                production_line_ids = products_n_lines_dict[(factory_id, product_id)]
 
-                cursor.execute(insert_query, (
-                    factory_id,
-                    production_line_id,
-                    product_id,
-                    wo_quantity,
-                    start_date_wo,
-                    due_date,
-                ))
-                wo_counter += 1
+                for production_line_id in production_line_ids:
+                    line_capacity = lines_capacity_dict[production_line_id]
+                    wo_quantity = get_wo_quantity(production_line_id, quantity) * ratio
+                    due_date = start_date_wo + timedelta(days=math.ceil(wo_quantity / line_capacity))
+
+                    cursor.execute(insert_query, (
+                        factory_id,
+                        production_line_id,
+                        product_id,
+                        wo_quantity,
+                        start_date_wo,
+                        due_date,
+                    ))
+                    wo_counter += 1
                 
         connection.commit()
         print(f"{wo_counter} work orders successfully inseted.")
+
+        #Register inventory transaction
+        '''
+        wo_fetch = 'SELECT work_order_id, factory_id, product_id, quantity FROM work_orders WHERE start_date = {start_date_wo}'
+
+        inv_transaction_insertQ = 
+            INSERT INTO inventory_transactions
+            (
+                material_id,
+                factory_id,
+                quantity,
+                transaction_type,
+                work_order_id,
+                transaction_date
+            )
+            VALUES 
+'''
+        
     except Exception as e:
         connection.rollback()
         raise

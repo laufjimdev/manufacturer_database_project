@@ -151,7 +151,7 @@ def simulate_purchase_order_items(purchase_orders_data, connection):
                 line_total,
                 quantity
             ))
-        poi_counter += 1
+            poi_counter += 1
 
     cursor.executemany(insert_query, rows)
 
