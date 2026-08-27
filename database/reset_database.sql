@@ -15,6 +15,7 @@ TRUNCATE TABLE
     sales_orders,
     purchase_order_items,
     purchase_orders,
+    product_transfers,
     work_orders,
     quality_inspections,
     products_inventory,

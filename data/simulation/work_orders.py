@@ -60,7 +60,8 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
                 start_date,
                 due_date,
                 status,
-                priority
+                priority,
+                completed_at
             )
             VALUES
             (
@@ -71,7 +72,8 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
                 %s,
                 %s,
                 'completed',
-                'normal'
+                'normal',
+                %s
             )
             RETURNING work_order_id;
     '''
@@ -96,6 +98,7 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
                         wo_quantity,
                         start_date_wo,
                         due_date,
+                        due_date
                     ))
                     work_order_id = cursor.fetchone()[0]
                     wo_counter += 1

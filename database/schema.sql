@@ -66,7 +66,8 @@ CREATE TABLE IF NOT EXISTS public.inventory_transactions
     work_order_id integer,
     transaction_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     notes text COLLATE pg_catalog."default",
-    CONSTRAINT inventory_transactions_pkey PRIMARY KEY (transaction_id)
+    CONSTRAINT inventory_transactions_pkey PRIMARY KEY (transaction_id),
+    CONSTRAINT uq_inv_txn_wo_material UNIQUE (work_order_id, material_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.machine_downtime
@@ -129,6 +130,20 @@ CREATE TABLE IF NOT EXISTS public.product_categories
     category_name character varying(100) COLLATE pg_catalog."default" NOT NULL,
     description text COLLATE pg_catalog."default",
     CONSTRAINT product_categories_pkey PRIMARY KEY (category_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.product_transfers
+(
+    transfer_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    work_order_id integer NOT NULL,
+    factory_id character(2) COLLATE pg_catalog."default" NOT NULL,
+    warehouse_id character(2) COLLATE pg_catalog."default" NOT NULL,
+    product_id integer NOT NULL,
+    quantity integer NOT NULL,
+    shipped_date date NOT NULL,
+    received_date date,
+    status character varying(20) COLLATE pg_catalog."default" NOT NULL DEFAULT 'in_transit'::character varying,
+    CONSTRAINT product_transfers_pkey PRIMARY KEY (transfer_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.production_line_categories
@@ -342,6 +357,7 @@ CREATE TABLE IF NOT EXISTS public.work_orders
     due_date date,
     status character varying(20) COLLATE pg_catalog."default" NOT NULL DEFAULT 'pending'::character varying,
     priority character varying(20) COLLATE pg_catalog."default" NOT NULL DEFAULT 'normal'::character varying,
+    completed_at timestamp without time zone,
     CONSTRAINT work_orders_pkey PRIMARY KEY (work_order_id)
 );
 
@@ -417,15 +433,6 @@ ALTER TABLE IF EXISTS public.inventory_transactions
     ON DELETE NO ACTION;
 
 
-ALTER TABLE IF EXISTS public.inventory_transactions
-    ADD CONSTRAINT fk_inv_txn_work_order FOREIGN KEY (work_order_id)
-    REFERENCES public.work_orders (work_order_id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION;
-CREATE INDEX IF NOT EXISTS uq_inv_txn_work_order
-    ON public.inventory_transactions(work_order_id);
-
-
 ALTER TABLE IF EXISTS public.machine_downtime
     ADD CONSTRAINT fk_machine_downtime_machine FOREIGN KEY (machine_id)
     REFERENCES public.machines (machine_id) MATCH SIMPLE
@@ -464,6 +471,34 @@ ALTER TABLE IF EXISTS public.maintenance_plans
 ALTER TABLE IF EXISTS public.maintenance_plans
     ADD CONSTRAINT fk_maintenance_plans_machine FOREIGN KEY (machine_id)
     REFERENCES public.machines (machine_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.product_transfers
+    ADD CONSTRAINT fk_transfer_factory FOREIGN KEY (factory_id)
+    REFERENCES public.factories (factory_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.product_transfers
+    ADD CONSTRAINT fk_transfer_product FOREIGN KEY (product_id)
+    REFERENCES public.products (product_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.product_transfers
+    ADD CONSTRAINT fk_transfer_warehouse FOREIGN KEY (warehouse_id)
+    REFERENCES public.warehouses (warehouse_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.product_transfers
+    ADD CONSTRAINT fk_transfer_work_order FOREIGN KEY (work_order_id)
+    REFERENCES public.work_orders (work_order_id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 
