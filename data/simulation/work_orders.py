@@ -2,6 +2,7 @@ import math
 from datetime import timedelta, date
 from database.db_connection import get_connection
 from data.seed.data_configs.product_bom_config import PRODUCT_RATIOS
+from data.simulation.raw_materials_inventory import record_consumption_transaction
 
 
 def get_wo_quantity(production_line_id, quantity):
@@ -41,6 +42,13 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
         for production_line_id, capacity_per_day in lines_capacity:
             lines_capacity_dict[production_line_id] = capacity_per_day
 
+        #Getting product BOM (materials required per product)
+        cursor.execute('SELECT * FROM product_bom;')
+        rows = cursor.fetchall()
+        product_bom_dict = {}
+        for product_id, material_id, quantity_required in rows:
+            product_bom_dict.setdefault(product_id, {})[material_id] = quantity_required
+
 
         insert_query = '''
             INSERT INTO work_orders
@@ -64,10 +72,12 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
                 %s,
                 'completed',
                 'normal'
-            );
+            )
+            RETURNING work_order_id;
     '''
 
         wo_counter = 0
+        inv_trns_counter = 0
 
         for factory_id, quantity in factory_base_quantities_wo.items():
             for product_id, ratio in PRODUCT_RATIOS.items():
@@ -87,27 +97,25 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
                         start_date_wo,
                         due_date,
                     ))
+                    work_order_id = cursor.fetchone()[0]
                     wo_counter += 1
+
+                    #Register consumption transactions for this work order
+                    materials = product_bom_dict[product_id]
+                    for material_id, quantity_required in materials.items():
+                        m_quantity_total = wo_quantity * quantity_required
+                        record_consumption_transaction(
+                            connection,
+                            material_id,
+                            factory_id,
+                            m_quantity_total,
+                            work_order_id=work_order_id
+                        )
+                        inv_trns_counter += 1
                 
         connection.commit()
         print(f"{wo_counter} work orders successfully inseted.")
-
-        #Register inventory transaction
-        '''
-        wo_fetch = 'SELECT work_order_id, factory_id, product_id, quantity FROM work_orders WHERE start_date = {start_date_wo}'
-
-        inv_transaction_insertQ = 
-            INSERT INTO inventory_transactions
-            (
-                material_id,
-                factory_id,
-                quantity,
-                transaction_type,
-                work_order_id,
-                transaction_date
-            )
-            VALUES 
-'''
+        print(f"{inv_trns_counter} inventory transactions successfully inserted.")
         
     except Exception as e:
         connection.rollback()
@@ -122,5 +130,3 @@ if __name__ == "__main__":
     factory_base_quantities_wo = {"F1": 800, "F2": 600, "F3": 300} 
     start_date = date(2026, 2, 1)
     simulate_work_orders(factory_base_quantities_wo, start_date)
-
-    

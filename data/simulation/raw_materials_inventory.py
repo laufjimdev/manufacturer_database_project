@@ -1,12 +1,12 @@
 from database.db_connection import get_connection
 
 
-def get_unprocessed_received_items():
+def get_unprocessed_received_items(connection):
     """
     Returns purchase order items that have NOT yet been turned into
     a RECEIPT transaction.
     """
-    connection = get_connection()
+    
     cursor = connection.cursor()
 
     cursor.execute('''
@@ -24,20 +24,18 @@ def get_unprocessed_received_items():
     items = cursor.fetchall()
 
     cursor.close()
-    connection.close()
     return items  # purchase_order_item_id, material_id, quantity_received, factory_id, expected_date
 
 
-def record_receipt_transactions():
+def record_receipt_transactions(connection):
     """
     Turns any not-yet-processed purchase order items into RECEIPT
     rows in the ledger.
     """
-    items = get_unprocessed_received_items()
+    items = get_unprocessed_received_items(connection)
     if not items:
         return 0
 
-    connection = get_connection()
     cursor = connection.cursor()
 
     for purchase_order_item_id, material_id, quantity_received, factory_id, expected_date in items:
@@ -49,19 +47,17 @@ def record_receipt_transactions():
         ''', (material_id, factory_id, quantity_received,
               purchase_order_item_id, expected_date))
 
-    connection.commit()
     cursor.close()
-    connection.close()
     return len(items)
 
 
-def record_consumption_transaction(material_id, factory_id, quantity, work_order_id=None, notes=None):
+def record_consumption_transaction(connection, material_id, factory_id, quantity, work_order_id=None, notes=None):
     """
     Records material used up in manufacturing. `quantity` should be
     passed as a positive number here — this function negates it
     before storing, so callers don't have to remember the sign convention.
+    This function is called from the simulate.work_orders module
     """
-    connection = get_connection()
     cursor = connection.cursor()
 
     cursor.execute('''
@@ -71,17 +67,14 @@ def record_consumption_transaction(material_id, factory_id, quantity, work_order
         VALUES (%s, %s, %s, 'CONSUMPTION', %s, %s)
     ''', (material_id, factory_id, -abs(quantity), work_order_id, notes))
 
-    connection.commit()
     cursor.close()
-    connection.close()
 
 
-def recompute_inventory_balances():
+def recompute_inventory_balances(connection):
     """
     Rebuilds quantity_on_hand and last_updated for every
     (material_id, factory_id) pair by summing the full ledger.
     """
-    connection = get_connection()
     cursor = connection.cursor()
 
     cursor.execute('''
@@ -100,12 +93,10 @@ def recompute_inventory_balances():
             last_updated = EXCLUDED.last_updated;
     ''')
 
-    connection.commit()
     cursor.close()
-    connection.close()
 
 
-def seed_raw_materials_inventory():
+def simulate_raw_materials_inventory():
     """
     Initial bootstrap AND ongoing updates use the same two steps:
     1. Turn any new purchase order items into ledger rows.
@@ -113,5 +104,14 @@ def seed_raw_materials_inventory():
     Safe to call on a fresh empty table or repeatedly afterward —
     already-processed purchases are skipped automatically.
     """
-    record_receipt_transactions()
-    recompute_inventory_balances()
+    connection = get_connection()
+    try:
+        record_receipt_transactions(connection)
+        recompute_inventory_balances(connection)
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        print(f"Failed to seed raw_materials_inventory, rolled back: {e}")
+        raise
+    finally:
+        connection.close()

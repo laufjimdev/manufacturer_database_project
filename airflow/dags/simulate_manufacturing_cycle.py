@@ -11,7 +11,7 @@ from database.db_connection import get_connection
 
 from data.simulation.purchase_orders_n_items import generate_purchase_order_data, simulate_purchase_orders, simulate_purchase_order_items
 from data.simulation.work_orders import simulate_work_orders
-
+from data.simulation.raw_materials_inventory import simulate_raw_materials_inventory
 
 
 @dag(
@@ -25,7 +25,7 @@ from data.simulation.work_orders import simulate_work_orders
         "purchase_start_date": Param("2026-01-01", type="string", format="date"),
         "purchase_end_date": Param("2026-01-23", type="string", format="date"),
         # Work order simulation params
-        "factory_base_quantities_wo": Param({"F1": 800, "F2": 600, "F3": 300}, type = "object"),
+        "factory_base_quantities_wo": Param({"F1": 800, "F2": 580, "F3": 315}, type = "object"),
         "start_date_wo": Param("2026-02-01", type= "string", format= "date")
     },
 )
@@ -63,14 +63,18 @@ def simulate_manufacturing_cycle():
         start_date_wo = date.fromisoformat(params["start_date_wo"])
 
         simulate_work_orders(factory_base_quantities_wo, start_date_wo)
-    
+
+    @task
+    def run_raw_materials_inventory_simulation():
+        simulate_raw_materials_inventory()
 
 
 
     po_task = run_purchase_order_simulation()
     wo_task = run_work_order_simulation()
+    rm_inv_task = run_raw_materials_inventory_simulation()
 
     po_task >> wo_task
-
+    [po_task, wo_task] >> rm_inv_task
 
 simulate_manufacturing_cycle()

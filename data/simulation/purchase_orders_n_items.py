@@ -155,11 +155,9 @@ def simulate_purchase_order_items(purchase_orders_data, connection):
 
     cursor.executemany(insert_query, rows)
 
-    
-
-    cursor.close()
 
     print(f"{poi_counter} purchase order items inserted successfully.")
+    cursor.close()
 
 
 
