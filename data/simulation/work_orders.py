@@ -3,7 +3,7 @@ from datetime import timedelta, date
 from database.db_connection import get_connection
 from data.seed.data_configs.product_bom_config import PRODUCT_RATIOS
 from data.simulation.raw_materials_inventory import record_consumption_transaction
-
+from data.simulation.product_transfers import create_product_transfer
 
 def get_wo_quantity(production_line_id, quantity):
     if production_line_id not in (1,2):
@@ -78,6 +78,7 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
             RETURNING work_order_id;
     '''
 
+
         wo_counter = 0
         inv_trns_counter = 0
 
@@ -102,6 +103,12 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
                     ))
                     work_order_id = cursor.fetchone()[0]
                     wo_counter += 1
+
+                    #Simulate product transfer
+                    shipped_date = due_date + timedelta(days=2)
+                    received_date = shipped_date + timedelta(days=2)
+                    create_product_transfer(connection, work_order_id, factory_id, product_id,
+            quantity, shipped_date, received_date)
 
                     #Register consumption transactions for this work order
                     materials = product_bom_dict[product_id]

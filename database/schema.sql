@@ -1,4 +1,3 @@
-
 BEGIN;
 
 
@@ -53,6 +52,14 @@ CREATE TABLE IF NOT EXISTS public.factories
     capacity_units_per_day integer NOT NULL DEFAULT 0,
     manager_employee_id integer,
     CONSTRAINT factories_pkey PRIMARY KEY (factory_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.factory_warehouse_links
+(
+    factory_id character(2) COLLATE pg_catalog."default" NOT NULL,
+    warehouse_id character(2) COLLATE pg_catalog."default" NOT NULL,
+    role character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT factory_warehouse_links_pkey PRIMARY KEY (factory_id, warehouse_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.inventory_transactions
@@ -408,6 +415,22 @@ ALTER TABLE IF EXISTS public.factories
     REFERENCES public.employees (employee_id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.factory_warehouse_links
+    ADD CONSTRAINT fk_fwl_factory FOREIGN KEY (factory_id)
+    REFERENCES public.factories (factory_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.factory_warehouse_links
+    ADD CONSTRAINT fk_fwl_warehouse FOREIGN KEY (warehouse_id)
+    REFERENCES public.warehouses (warehouse_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+CREATE INDEX IF NOT EXISTS uq_fwl_one_primary_per_warehouse
+    ON public.factory_warehouse_links(warehouse_id);
 
 
 ALTER TABLE IF EXISTS public.inventory_transactions

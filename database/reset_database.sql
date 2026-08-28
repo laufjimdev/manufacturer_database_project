@@ -44,7 +44,8 @@ TRUNCATE TABLE
 
     -- Core company structure
     factories,
-    warehouses
+    warehouses,
+    factory_warehouse_links
 
 RESTART IDENTITY CASCADE;
 
