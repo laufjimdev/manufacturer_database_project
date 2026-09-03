@@ -61,7 +61,7 @@ def create_product_transfer(connection,work_order_id, factory_id, product_id,
             'product_transfer',
             %s,
             %s,
-            %s,
+            %s
         );
 '''
     cursor.execute(p_i_t_Q, (
