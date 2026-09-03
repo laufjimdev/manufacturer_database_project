@@ -1,3 +1,4 @@
+
 BEGIN;
 
 
@@ -137,6 +138,18 @@ CREATE TABLE IF NOT EXISTS public.product_categories
     category_name character varying(100) COLLATE pg_catalog."default" NOT NULL,
     description text COLLATE pg_catalog."default",
     CONSTRAINT product_categories_pkey PRIMARY KEY (category_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.product_inventory_transactions
+(
+    product_inventory_transaction_id integer NOT NULL,
+    transaction_type character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    product_id integer NOT NULL,
+    quantity integer NOT NULL,
+    transfer_id integer,
+    sales_order_id integer,
+    return_id integer,
+    CONSTRAINT product_inventory_transactions_pkey PRIMARY KEY (product_inventory_transaction_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.product_transfers
@@ -494,6 +507,34 @@ ALTER TABLE IF EXISTS public.maintenance_plans
 ALTER TABLE IF EXISTS public.maintenance_plans
     ADD CONSTRAINT fk_maintenance_plans_machine FOREIGN KEY (machine_id)
     REFERENCES public.machines (machine_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.product_inventory_transactions
+    ADD CONSTRAINT fk_product_id FOREIGN KEY (product_id)
+    REFERENCES public.products (product_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.product_inventory_transactions
+    ADD CONSTRAINT fk_return_id FOREIGN KEY (return_id)
+    REFERENCES public.returns (return_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.product_inventory_transactions
+    ADD CONSTRAINT fk_sales_order_id FOREIGN KEY (sales_order_id)
+    REFERENCES public.sales_orders (sales_order_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.product_inventory_transactions
+    ADD CONSTRAINT fk_transfer_id FOREIGN KEY (transfer_id)
+    REFERENCES public.product_transfers (transfer_id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 
