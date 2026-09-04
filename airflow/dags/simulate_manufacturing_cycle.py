@@ -20,12 +20,12 @@ from data.simulation.raw_materials_inventory import simulate_raw_materials_inven
     params={
         # Purchase order simulation params
         "factory_base_quantities": Param(
-            {"F1": 1000, "F2": 800, "F3": 500}, type="object"
+            {"F1": 1500, "F2": 800, "F3": 500}, type="object"
         ),
         "purchase_start_date": Param("2026-01-01", type="string", format="date"),
         "purchase_end_date": Param("2026-01-23", type="string", format="date"),
         # Work order simulation params
-        "factory_base_quantities_wo": Param({"F1": 800, "F2": 580, "F3": 315}, type = "object"),
+        "factory_base_quantities_wo": Param({"F1": 1200, "F2": 580, "F3": 315}, type = "object"),
         "start_date_wo": Param("2026-02-01", type= "string", format= "date")
     },
 )
