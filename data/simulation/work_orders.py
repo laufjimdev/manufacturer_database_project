@@ -108,7 +108,7 @@ def simulate_work_orders(factory_base_quantities_wo, start_date_wo):
                     shipped_date = due_date + timedelta(days=2)
                     received_date = shipped_date + timedelta(days=2)
                     create_product_transfer(connection, work_order_id, factory_id, product_id,
-            quantity, shipped_date, received_date)
+            wo_quantity, shipped_date, received_date)
 
                     #Register consumption transactions for this work order
                     materials = product_bom_dict[product_id]
