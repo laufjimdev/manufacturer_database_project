@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS public.product_categories
 
 CREATE TABLE IF NOT EXISTS public.product_inventory_transactions
 (
-    product_inventory_transaction_id integer NOT NULL,
+    product_inventory_transaction_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     transaction_type character varying(20) COLLATE pg_catalog."default" NOT NULL,
     product_id integer NOT NULL,
     quantity integer NOT NULL,
@@ -245,6 +245,9 @@ CREATE TABLE IF NOT EXISTS public.quality_inspections
     inspector_employee_id integer NOT NULL,
     result character varying(20) COLLATE pg_catalog."default" NOT NULL,
     defect_count integer NOT NULL DEFAULT 0,
+    work_order_id integer,
+    disposition character varying(20) COLLATE pg_catalog."default" NOT NULL DEFAULT 'none'::character varying,
+    quantity_affected integer NOT NULL DEFAULT 0,
     CONSTRAINT quality_inspections_pkey PRIMARY KEY (inspection_id)
 );
 
@@ -378,6 +381,7 @@ CREATE TABLE IF NOT EXISTS public.work_orders
     status character varying(20) COLLATE pg_catalog."default" NOT NULL DEFAULT 'pending'::character varying,
     priority character varying(20) COLLATE pg_catalog."default" NOT NULL DEFAULT 'normal'::character varying,
     completed_at timestamp without time zone,
+    reworked boolean NOT NULL DEFAULT false,
     CONSTRAINT work_orders_pkey PRIMARY KEY (work_order_id)
 );
 
@@ -662,6 +666,13 @@ ALTER TABLE IF EXISTS public.quality_inspections
 ALTER TABLE IF EXISTS public.quality_inspections
     ADD CONSTRAINT fk_quality_inspections_production_line FOREIGN KEY (production_line_id)
     REFERENCES public.production_lines (production_line_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.quality_inspections
+    ADD CONSTRAINT fk_quality_inspections_work_order FOREIGN KEY (work_order_id)
+    REFERENCES public.work_orders (work_order_id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 
