@@ -4,11 +4,8 @@ from data.seed.suppliers import create_contact_info
 
 fake = Faker("en_US")
 
-LOCATIONS = [
-    ("Phoenix", "AZ", "85"),
-    ("Dallas", "TX", "75"),
-    ("Atlanta", "GA", "30")
-]
+EXCLUDED_STATES = {"AK", "HI"}
+
 
 def generate_event_company():
     event_keywords = [
@@ -33,14 +30,23 @@ def generate_event_company():
 
     return f"{base} {keyword}"
 
-def generate_customer(location):
+
+def _generate_continental_state():
+    state = fake.state_abbr(include_territories=False)
+    while state in EXCLUDED_STATES:
+        state = fake.state_abbr(include_territories=False)
+    return state
+
+
+def generate_customer():
     customer_name = generate_event_company()
     first_name, last_name, email = create_contact_info(customer_name)
     contact_name = f"{first_name} {last_name}"
     phone = fake.numerify('###-###-####')
-    city, state, zipcode_prefix = location
+    city = fake.city()
+    state = _generate_continental_state()
+    zipcode = fake.zipcode_in_state(state)
     billing_address_st = fake.street_address()
-    zipcode = fake.numerify(zipcode_prefix + "###")
 
     return (customer_name, contact_name, email, phone, billing_address_st, city, state, zipcode)
 
@@ -48,8 +54,8 @@ def generate_customer(location):
 def seed_customers():
 
     total_customers = 190
-    
-    connection= get_connection()
+
+    connection = get_connection()
     cursor = connection.cursor()
 
     insert_query = '''
@@ -77,9 +83,8 @@ def seed_customers():
         );
 '''
 
-    for _ in range (total_customers):
-        location = fake.random_element(LOCATIONS)
-        customer_name, contact_name, email, phone, billing_address_st, city, state, zipcode = generate_customer(location)
+    for _ in range(total_customers):
+        customer_name, contact_name, email, phone, billing_address_st, city, state, zipcode = generate_customer()
         cursor.execute(insert_query, (
             customer_name,
             contact_name,
@@ -97,6 +102,7 @@ def seed_customers():
     rows = cursor.fetchone()[0]
 
     print(f"{rows} customers successfully inserted")
+
 
 if __name__ == "__main__":
     seed_customers()
