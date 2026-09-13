@@ -15,10 +15,12 @@ def seed_products():
             dimensions,
             weight_lb,
             load_capacity,
+            selling_price,
             active_flag
         )
         VALUES 
         (
+            %s,
             %s,
             %s,
             %s,
@@ -32,14 +34,15 @@ def seed_products():
     category_ids_list = get_category_ids()
     category_map = {category_name: category_id for category_id, category_name in category_ids_list}
 
-    for product_name, description, category_n, dimensions, weight_lb,load_capacity, line_name in PRODUCTS:
+    for product_name, description, category_n, dimensions, weight_lb, load_capacity, selling_price, line_name in PRODUCTS:
         cursor.execute(insert_query, (
             product_name,
             description,
             category_map[category_n],
             dimensions,
             weight_lb,
-            load_capacity
+            load_capacity,
+            selling_price
         ))
 
     connection.commit()

@@ -195,7 +195,6 @@ CREATE TABLE IF NOT EXISTS public.products
     load_capacity numeric(10, 2),
     unit_cost numeric(12, 2) DEFAULT 0,
     selling_price numeric(12, 2) DEFAULT 0,
-    production_time_days integer,
     active_flag boolean NOT NULL DEFAULT true,
     CONSTRAINT products_pkey PRIMARY KEY (product_id)
 );
@@ -208,7 +207,8 @@ CREATE TABLE IF NOT EXISTS public.products_inventory
     quantity_on_hand integer NOT NULL DEFAULT 0,
     reorder_level integer NOT NULL DEFAULT 0,
     last_updated timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT inventory_pkey PRIMARY KEY (inventory_id)
+    CONSTRAINT inventory_pkey PRIMARY KEY (inventory_id),
+    CONSTRAINT products_inventory_product_warehouse_key UNIQUE (product_id, warehouse_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.purchase_order_items

@@ -5,6 +5,7 @@ PRODUCTS = [
      '60" diameter × 30" height',
      95,
      750,
+     220.00,
      'Wood Composite'
      ),
     ('72" Round Banquet Table',
@@ -13,6 +14,7 @@ PRODUCTS = [
      '72" diameter × 30" height',
      125,
      900,
+     260.00,
      'Wood Composite'
      ),
     ('96" Rectangular Conference Table',
@@ -21,6 +23,7 @@ PRODUCTS = [
      '96" × 30" × 30"',
      150,
      1200,
+     320.00,
      'Wood Composite'
      ),
     ('6 ft Folding Utility Table',
@@ -29,6 +32,7 @@ PRODUCTS = [
      '72" × 30" × 30"',
      85,
      700,
+     150.00,
      'Wood Composite'
      ),
     ('30" Aluminum Cocktail Table',
@@ -37,6 +41,7 @@ PRODUCTS = [
      '30" diameter × 42" height',
      35,
      300,
+     180.00,
      'Aluminum'
      ),
     ('Adjustable Aluminum Training Table',
@@ -45,6 +50,7 @@ PRODUCTS = [
      '72" × 18" × 30"',
      55,
      500,
+     210.00,
      'Aluminum'
      ),
     ('Portable Aluminum Vendor Table',
@@ -53,6 +59,7 @@ PRODUCTS = [
      '60" × 24" × 30"',
      45,
      400,
+     190.00,
      'Aluminum'
      ),
     ('Aluminum Folding Picnic Table',
@@ -61,6 +68,7 @@ PRODUCTS = [
      '72" × 52" × 30"',
      80,
      600,
+     240.00,
      'Aluminum'
      ),
     ('Heavy-Duty Catering Prep Table',
@@ -69,6 +77,7 @@ PRODUCTS = [
      '72" × 30" × 36"',
      180,
      1500,
+     450.00,
      'Stainless Steel'
      ),
     ('Industrial Buffet Serving Table',
@@ -77,6 +86,7 @@ PRODUCTS = [
      '96" × 36" × 36"',
      250,
      2000,
+     650.00,
      'Stainless Steel'
      ),
     ('Mobile Kitchen Event Table',
@@ -85,6 +95,7 @@ PRODUCTS = [
      '60" × 30" × 36"',
      140,
      1200,
+     500.00,
      'Stainless Steel'
      ),
     ('Tempered Glass Display Table',
@@ -93,6 +104,7 @@ PRODUCTS = [
      '48" diameter × 30" height',
      120,
      500,
+     380.00,
      'Specialty Assembly'
      ),
 ]

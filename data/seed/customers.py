@@ -4,7 +4,6 @@ from data.seed.suppliers import create_contact_info
 
 fake = Faker("en_US")
 
-EXCLUDED_STATES = {"AK", "HI"}
 
 
 def generate_event_company():
@@ -31,20 +30,13 @@ def generate_event_company():
     return f"{base} {keyword}"
 
 
-def _generate_continental_state():
-    state = fake.state_abbr(include_territories=False)
-    while state in EXCLUDED_STATES:
-        state = fake.state_abbr(include_territories=False)
-    return state
-
-
 def generate_customer():
     customer_name = generate_event_company()
     first_name, last_name, email = create_contact_info(customer_name)
     contact_name = f"{first_name} {last_name}"
     phone = fake.numerify('###-###-####')
     city = fake.city()
-    state = _generate_continental_state()
+    state = fake.state_abbr(include_territories=False)
     zipcode = fake.zipcode_in_state(state)
     billing_address_st = fake.street_address()
 

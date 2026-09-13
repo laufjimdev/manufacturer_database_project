@@ -1,4 +1,4 @@
-from database.db_connection import get_connection
+from data.simulation.products_inventory import record_transfer_transaction
 
 def create_product_transfer(connection, work_order_id, factory_id, product_id,
             quantity, shipped_date, received_date):
@@ -48,25 +48,6 @@ def create_product_transfer(connection, work_order_id, factory_id, product_id,
         RETURNING transfer_id;
     '''
 
-    #Creating product_inventory_transaction
-    
-    p_i_t_Q = '''
-        INSERT INTO product_inventory_transactions
-        (
-            transaction_type,
-            product_id,
-            quantity,
-            transfer_id
-        )
-        VALUES
-        (
-            'product_transfer',
-            %s,
-            %s,
-            %s
-        );
-    '''
-
     remaining_quantity = quantity
     for i, (warehouse_id, capacity) in enumerate(warehouses):
         if i == len(warehouses) - 1:
@@ -87,10 +68,6 @@ def create_product_transfer(connection, work_order_id, factory_id, product_id,
         ))
         transfer_id = cursor.fetchone()[0]
 
-        cursor.execute(p_i_t_Q, (
-            product_id,
-            wh_quantity,
-            transfer_id
-        ))
+        record_transfer_transaction(connection, product_id, wh_quantity, transfer_id)
 
     cursor.close()
