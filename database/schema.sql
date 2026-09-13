@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS public.products
     dimensions character varying(100) COLLATE pg_catalog."default",
     weight_lb numeric(10, 2),
     load_capacity numeric(10, 2),
-    unit_cost numeric(12, 2) DEFAULT 0,
+    standard_unit_cost numeric(12, 2) DEFAULT 0,
     selling_price numeric(12, 2) DEFAULT 0,
     active_flag boolean NOT NULL DEFAULT true,
     CONSTRAINT products_pkey PRIMARY KEY (product_id)

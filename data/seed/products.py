@@ -2,6 +2,7 @@ from database.db_connection import get_connection
 from data.seed.data_configs.products_config import PRODUCTS
 from data.seed.product_categories import get_category_ids
 
+
 def seed_products():
     connection = get_connection()
     cursor = connection.cursor()
@@ -33,6 +34,7 @@ def seed_products():
 
     category_ids_list = get_category_ids()
     category_map = {category_name: category_id for category_id, category_name in category_ids_list}
+
 
     for product_name, description, category_n, dimensions, weight_lb, load_capacity, selling_price, line_name in PRODUCTS:
         cursor.execute(insert_query, (
