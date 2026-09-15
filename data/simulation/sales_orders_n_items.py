@@ -3,6 +3,7 @@ from database.db_connection import get_connection
 from data.seed.data_configs.warehouse_regions_config import get_state_to_warehouse_map
 from data.seed.data_configs.product_bom_config import PRODUCT_RATIOS
 from data.simulation.products_inventory import get_inventory_balances, record_sale_transaction
+from data.simulation.shipments import create_shipment
 from faker import Faker
 import random
 
@@ -227,21 +228,30 @@ def simulate_sales_orders(sales_orders_data, connection):
 
     so_counter = 0
     for order in sales_orders_data:
+        customer_id = order["customer_id"]
+        order_date = order["order_date"]
+        total_amount = order["total_amount"]
+        warehouse_id = order["warehouse_id"]
+        shipping_address = order["shipping_address"]
+
         cursor.execute(insert_query, (
-            order["customer_id"],
-            order["order_date"],
-            order["total_amount"],
-            order["warehouse_id"],
-            order["shipping_address"],
+            customer_id,
+            order_date,
+            total_amount,
+            warehouse_id,
+            shipping_address,
         ))
-        order["sales_order_id"] = cursor.fetchone()[0]
+
+        sales_order_id = cursor.fetchone()[0]
+        order["sales_order_id"] = sales_order_id
+
+        create_shipment(connection, sales_order_id, warehouse_id, order_date)
         so_counter += 1
 
     cursor.close()
 
     print(f"{so_counter} sales orders inserted successfully.")
     return sales_orders_data
-
 
 def simulate_sales_order_items(sales_orders_data, connection):
     """
