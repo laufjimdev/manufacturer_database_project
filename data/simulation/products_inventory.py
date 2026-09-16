@@ -74,6 +74,17 @@ def record_sale_transaction(connection, product_id, quantity, sales_order_id):
 
     cursor.close()
 
+def record_restocked_transaction(connection, product_id, quantity, return_id):
+    cursor = connection.cursor()
+
+    cursor.execute('''
+        INSERT INTO product_inventory_transactions
+            (transaction_type, product_id, quantity, return_id)
+        VALUES ('return', %s, %s, %s);
+    ''', (product_id, quantity, return_id))
+
+    cursor.close()
+
 
 def recompute_products_inventory_balances(connection):
     """
