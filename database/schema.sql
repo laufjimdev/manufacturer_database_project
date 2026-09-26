@@ -85,7 +85,6 @@ CREATE TABLE IF NOT EXISTS public.machine_downtime
     start_time timestamp without time zone NOT NULL,
     end_time timestamp without time zone,
     downtime_reason text COLLATE pg_catalog."default",
-    impact_hours numeric(6, 2),
     CONSTRAINT machine_downtime_pkey PRIMARY KEY (downtime_id)
 );
 
@@ -500,12 +499,6 @@ ALTER TABLE IF EXISTS public.maintenance_logs
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
 
-
-ALTER TABLE IF EXISTS public.maintenance_plans
-    ADD CONSTRAINT fk_maintenance_plans_employee FOREIGN KEY (assigned_employee_id)
-    REFERENCES public.employees (employee_id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION;
 
 
 ALTER TABLE IF EXISTS public.maintenance_plans

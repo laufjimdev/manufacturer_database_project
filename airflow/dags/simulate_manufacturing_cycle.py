@@ -16,6 +16,7 @@ from data.simulation.products_inventory import simulate_products_inventory
 from data.simulation.sales_orders_n_items import simulate_sales_orders, simulate_sales_order_items, generate_sales_order_data
 from data.simulation.returns import simulate_returns
 from data.simulation.machine_downtime import simulate_machine_downtime
+from data.simulation.maintenance_logs import simulate_maintenance_logs
 
 @dag(
     dag_id="simulate_manufacturing_cycle",
@@ -41,6 +42,9 @@ from data.simulation.machine_downtime import simulate_machine_downtime
         "start_date": Param("2026-02-20", type="string", format="date"),
         "end_date": Param("2026-03-16", type="string", format="date"),
         "downtime_logs_count": 15, #optional, None by default
+        #Maintenance logs params
+        "operation_start": Param("2026-02-01", type= "string", format= "date"),
+        "operation_end": Param("2026-05-01", type= "string", format= "date"),
     },
 )
 def simulate_manufacturing_cycle():
@@ -143,6 +147,22 @@ def simulate_manufacturing_cycle():
         finally:
             connection.close()
 
+    @task
+    def run_maintenance_logs_simulation(**context):
+        params = context["params"]
+        operation_start = date.fromisoformat(params["operation_start"])
+        operation_end = date.fromisoformat(params["operation_end"])
+        
+        connection = get_connection()
+        try:
+            simulate_maintenance_logs(connection, operation_start, operation_end)
+            connection.commit()
+        except Exception as e:
+            connection.rollback()
+            raise Exception(f"Failed to generate maintenance logs, error: {e}") 
+        finally:
+            connection.close()
+
     po_task = run_purchase_order_simulation()
     wo_task = run_work_order_simulation()
     rm_inv_task = run_raw_materials_inventory_simulation()
@@ -150,9 +170,11 @@ def simulate_manufacturing_cycle():
     so_task = run_sales_orders_simulation()
     r_task = run_returns_simulation()
     mdt_task = run_machine_downtime_simulation()
+    ml_task = run_maintenance_logs_simulation()
 
     po_task >> wo_task
     [po_task, wo_task] >> rm_inv_task >> so_task >> r_task >> pi_task
     mdt_task
+    ml_task
 
 simulate_manufacturing_cycle()

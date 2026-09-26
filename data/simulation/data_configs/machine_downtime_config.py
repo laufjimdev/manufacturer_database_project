@@ -4,5 +4,4 @@ DOWNTIME_REASONS = [
     ("Tooling change or calibration", (0.5, 2.0)),
     ("Operator shortage / staffing gap", (1.0, 4.0)),
     ("Software / control system error", (0.5, 3.0)),
-    ("Scheduled preventive maintenance overrun", (0.5, 2.5)),
 ]
