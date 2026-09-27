@@ -14,6 +14,7 @@ from data.seed.warehouses import seed_warehouses
 from data.seed.suppliers import seed_suppliers
 from data.seed.departments import seed_departments
 from data.seed.employees import seed_employees
+from data.seed.managers_supervisors import seed_managers_supervisors
 from data.seed.raw_materials import seed_raw_materials
 from data.seed.raw_material_suppliers import seed_raw_material_suppliers
 from data.seed.product_categories import seed_product_categories
@@ -42,8 +43,8 @@ dag = DAG(
     schedule=None,
     catchup=False,
 )
-#Tasks
 
+#Tasks
 truncate_database_task = PythonOperator(
     task_id='truncate_database',
     python_callable=truncate_database,
@@ -73,13 +74,16 @@ seed_departments_task = PythonOperator(
     python_callable=seed_departments,
     dag=dag,
 )
-
 seed_employees_task = PythonOperator(
     task_id='seed_employees',
     python_callable=seed_employees,
     dag=dag,
 )
-
+seed_managers_supervisors_task = PythonOperator(
+    task_id='seed_managers_supervisors',
+    python_callable=seed_managers_supervisors,
+    dag=dag,
+)
 seed_raw_materials_task = PythonOperator(
     task_id='seed_raw_materials',
     python_callable=seed_raw_materials,
@@ -151,7 +155,7 @@ seed_suppliers_task >> [
     seed_raw_materials_task
 ]
 
-[seed_factories_task, seed_warehouses_task] >> seed_departments_task >> seed_employees_task
+[seed_factories_task, seed_warehouses_task] >> seed_departments_task >> seed_employees_task >> seed_managers_supervisors_task
 
 [seed_factories_task, seed_warehouses_task] >> seed_factory_warehouse_links_task
 

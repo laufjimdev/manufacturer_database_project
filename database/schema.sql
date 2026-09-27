@@ -119,7 +119,6 @@ CREATE TABLE IF NOT EXISTS public.maintenance_plans
     maintenance_type character varying(50) COLLATE pg_catalog."default" NOT NULL,
     frequency_days integer NOT NULL,
     estimated_duration_hours numeric(6, 2),
-    assigned_employee_id integer,
     CONSTRAINT maintenance_plans_pkey PRIMARY KEY (maintenance_plan_id)
 );
 
@@ -498,7 +497,6 @@ ALTER TABLE IF EXISTS public.maintenance_logs
     REFERENCES public.employees (employee_id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION;
-
 
 
 ALTER TABLE IF EXISTS public.maintenance_plans
