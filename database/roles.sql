@@ -4,11 +4,12 @@
 -- Creates the cluster-wide roles and their memberships.
 --
 -- Requires PostgreSQL 16+ (per-membership INHERIT / SET / ADMIN options).
--- Run as a superuser (e.g. lauradev) BEFORE schema.sql.
+-- Run as a superuser (e.g. lauradev). Roles are cluster-wide, so this
+-- does not need to be connected to the manufacturing database.
 -- Safe to re-run: existing roles are kept and their attributes re-applied.
 --
 -- Scope: roles, attributes and memberships ONLY.
--- Table/sequence privileges live in schema.sql
+-- Database / table / sequence privileges live in grants.sql.
 -- Passwords are NOT stored here.
 --
 -- Not created here: lauradev, the bootstrap superuser. It is the
@@ -77,7 +78,6 @@ $$;
 ALTER ROLE dba_1 LOGIN NOSUPERUSER NOCREATEDB CREATEROLE NOREPLICATION NOBYPASSRLS INHERIT;
 
 -- 2b. Business users: how many accounts per group.
--- maintenance_manager has no login accounts yet.
 -- Regular users get no role-management or database-creation attributes.
 DO $$
 DECLARE
@@ -87,10 +87,10 @@ DECLARE
 BEGIN
     FOR rec IN
         SELECT * FROM (VALUES
-            ('production_manager', 2),
+            ('production_manager',  2),
             ('maintenance_manager', 3),
-            ('read_only_auditor',  1),
-            ('sales_analyst',      3),
+            ('read_only_auditor',   1),
+            ('sales_analyst',       3),
             ('warehouse_staff',    16)
         ) AS t(group_name, account_count)
     LOOP
@@ -130,10 +130,10 @@ DECLARE
 BEGIN
     FOR rec IN
         SELECT * FROM (VALUES
-            ('production_manager', 2),
+            ('production_manager',  2),
             ('maintenance_manager', 3),
-            ('read_only_auditor',  1),
-            ('sales_analyst',      3),
+            ('read_only_auditor',   1),
+            ('sales_analyst',       3),
             ('warehouse_staff',    16)
         ) AS t(group_name, account_count)
     LOOP

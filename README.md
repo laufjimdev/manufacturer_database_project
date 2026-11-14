@@ -98,13 +98,14 @@ Access is managed with PostgreSQL roles. Privileges are granted to **group roles
 
 ### Login roles
 
-| Login role             | Member of group      |
-| ---------------------- | -------------------- |
-| `dba_n`                | `dba`                |
-| `production_manager_n` | `production_manager` |
-| `read_only_auditor_n`  | `read_only_auditor`  |
-| `sales_analyst_n`      | `sales_analyst`      |
-| `warehouse_staff_n`    | `warehouse_staff`    |
+| Login role              | Member of group       |
+| ----------------------- | --------------------- |
+| `dba_n`                 | `dba`                 |
+| `production_manager_n`  | `production_manager`  |
+| `maintenance_manager_n` | `maintenance_manager` |
+| `read_only_auditor_n`   | `read_only_auditor`   |
+| `sales_analyst_n`       | `sales_analyst`       |
+| `warehouse_staff_n`     | `warehouse_staff`     |
 
 `n` is the sequence number of the account (e.g. `warehouse_staff_1` to `warehouse_staff_16`).
 
@@ -130,9 +131,26 @@ Regular users are granted membership with `INHERIT TRUE, SET FALSE, ADMIN FALSE`
 
 ### Setup order
 
-1. `roles.sql`: create roles and memberships
-2. `schema.sql`: create tables, then apply grants
-3. Run the `seed_manufacturer_dag` and `simulate_manufacturing_cycle` DAGs
+The whole build is driven by one script, `database/setup_database.sql`, which runs the others in order. It is meant to be run with `psql` (not psycopg2), as `lauradev`, connected to the `postgres` maintenance database:
+
+```bash
+psql -h <host> -U lauradev -d postgres -v ON_ERROR_STOP=1 \
+     -v db_name=manufacturer_db -f database/setup_database.sql
+```
+
+| Step | Script               | What it does                                                                                          |
+| ---- | -------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1    | `roles.sql`          | Creates the group roles, login roles and memberships (cluster-wide)                                   |
+| 2    | `setup_database.sql` | Creates the database and grants `CONNECT` to the groups                                               |
+| 3    | `schema.sql`         | Creates tables, constraints and indexes (no privileges)                                               |
+| 4    | `grants.sql`         | Grants schema, column-level and table-level privileges, and sets default privileges for future tables |
+| 5    | DAGs                 | Run `seed_manufacturer_dag`, then `simulate_manufacturing_cycle`                                      |
+
+Notes:
+
+- All four SQL files must live in the same folder, because `setup_database.sql` includes the others with `\ir`.
+- `roles.sql` and `grants.sql` are idempotent and can be re-run on their own. The full setup is meant for a fresh database.
+- Passwords are not stored in any script. Assign them after setup.
 
 ## Note to Recruiters
 
